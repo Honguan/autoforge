@@ -93,7 +93,15 @@ def _git(*args: str, cwd: Path) -> str:
     except FileNotFoundError:
         raise PackSourceError("git is not installed", hint="Install git to install packs from GitHub.")
     except subprocess.CalledProcessError as e:
-        raise PackSourceError(f"git {args[0]} failed: {e.stderr.strip()}")
+        err = e.stderr.strip()
+        markers = ("could not read username", "repository not found", "could not read from remote repository",
+                   "couldn't find remote ref", "not our ref")
+        if any(m in err.lower() for m in markers):
+            raise PackSourceError(
+                "repository or ref not found (or private)",
+                hint="Check the owner/repo/ref. Use `pack search` to find indexed packs and install them by name.",
+            )
+        raise PackSourceError(f"git {args[0]} failed: {err}")
 
 
 def _fetch_github(src: GithubSource, workdir: Path) -> tuple[Path, str]:

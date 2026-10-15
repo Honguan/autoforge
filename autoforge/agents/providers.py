@@ -196,6 +196,23 @@ class AnthropicProvider(Provider):
 # ---------------------------------------------------------------- OpenAI-compatible (Ollama, OpenAI, vLLM ...)
 
 
+def simplify_schema(schema: Any) -> Any:
+    """Make JSON Schemas easier for small local models: `X | None` (anyOf with null) becomes X,
+    and pydantic's 'title' noise is dropped. Defaults and descriptions are kept."""
+    if isinstance(schema, list):
+        return [simplify_schema(s) for s in schema]
+    if not isinstance(schema, dict):
+        return schema
+    out = {k: simplify_schema(v) for k, v in schema.items() if k != "title"}
+    any_of = out.get("anyOf")
+    if isinstance(any_of, list):
+        non_null = [s for s in any_of if s != {"type": "null"}]
+        if len(non_null) == 1 and len(non_null) < len(any_of):
+            merged = {k: v for k, v in out.items() if k != "anyOf"}
+            return non_null[0] | merged
+    return out
+
+
 class OpenAICompatProvider(Provider):
     """Chat Completions with function calling over plain HTTP (httpx2)."""
 
@@ -212,7 +229,8 @@ class OpenAICompatProvider(Provider):
     def start(self, system: str, tools: list[ToolSpec]) -> None:
         self.messages = [{"role": "system", "content": system}]
         self.tools = [
-            {"type": "function", "function": {"name": t.name, "description": t.description, "parameters": t.input_schema}}
+            {"type": "function", "function": {"name": t.name, "description": t.description,
+                                              "parameters": simplify_schema(t.input_schema)}}
             for t in tools
         ]
 

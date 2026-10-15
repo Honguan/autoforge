@@ -94,7 +94,7 @@ async def run_agent(
     emit = on_event or (lambda e: None)
     transcript = Transcript()
     runs: list[str] = []
-    server = build_server(actor)
+    server = build_server(actor, log_level="WARNING")  # the agent reports tool errors itself
 
     user_msg = goal
     if data_path:

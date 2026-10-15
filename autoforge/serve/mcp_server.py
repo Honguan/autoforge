@@ -46,13 +46,13 @@ def _call(fn: Callable[[], Any]) -> dict[str, Any]:
         return Envelope(ok=False, error=err).model_dump(mode="json")
 
 
-def build_server(actor: str = "ai:mcp") -> MCPServer:
+def build_server(actor: str = "ai:mcp", log_level: str = "INFO") -> MCPServer:
     """`actor` is recorded in audit logs. 'ai:local:<model>' marks a local-model client,
     which is the only AI allowed to use sensitive data."""
     brain = brain_from_actor(actor)
     if brain is BrainKind.api:
         brain = BrainKind.subscription
-    server = MCPServer("autoforge", version=__version__, instructions=INSTRUCTIONS)
+    server = MCPServer("autoforge", version=__version__, instructions=INSTRUCTIONS, log_level=log_level)
     tool = server.tool
 
     # ---- environment ----

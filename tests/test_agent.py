@@ -280,3 +280,15 @@ def test_openai_compat_errors():
     with pytest.raises(ProviderError) as e:
         asyncio.run(p.complete())
     assert "ollama serve" in e.value.hint
+
+
+def test_simplify_schema_for_small_models():
+    from autoforge.agents.providers import simplify_schema
+    s = {"title": "A", "type": "object", "properties": {
+        "q": {"anyOf": [{"type": "string"}, {"type": "null"}], "default": None, "title": "Q"},
+        "n": {"type": "integer", "title": "N", "default": 5},
+        "u": {"anyOf": [{"type": "string"}, {"type": "integer"}]}}}
+    out = simplify_schema(s)
+    assert out == {"type": "object", "properties": {
+        "q": {"type": "string", "default": None}, "n": {"type": "integer", "default": 5},
+        "u": {"anyOf": [{"type": "string"}, {"type": "integer"}]}}}

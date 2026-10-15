@@ -74,3 +74,10 @@ def test_unknown_index_name(tmp_path, monkeypatch):
     monkeypatch.setenv("AUTOFORGE_INDEX_URL", str(path))
     with pytest.raises(PackNotFound):
         installer.install("does-not-exist")
+
+
+def test_missing_github_repo_has_clear_error(monkeypatch, tmp_path):
+    monkeypatch.setattr(installer, "github_url", lambda o, r: str(tmp_path / "no-such-repo"))
+    with pytest.raises(PackSourceError) as e:
+        installer.install("github:nobody/nothing@main")
+    assert "not found" in str(e.value) and "pack search" in e.value.hint
