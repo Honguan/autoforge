@@ -144,3 +144,24 @@ def serve_mcp(
     from autoforge.serve.model_mcp import main
 
     main(model or None)
+
+
+def gui(
+    port: int = typer.Option(8800, "--port", "-p"),
+    open_browser: bool = typer.Option(True, "--open/--no-open", help="Open the browser automatically."),
+) -> None:
+    """Open the web interface (local only: 127.0.0.1, protected by a one-time token)."""
+    import secrets
+    import threading
+    import webbrowser
+
+    import uvicorn
+
+    from autoforge.gui.app import create_app
+
+    token = secrets.token_urlsafe(24)
+    url = f"http://127.0.0.1:{port}/"
+    typer.echo(f"AutoForge GUI: {url}  (Ctrl+C to stop)")
+    if open_browser:
+        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+    uvicorn.run(create_app(token), host="127.0.0.1", port=port, log_level="warning")

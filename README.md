@@ -7,7 +7,7 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> 目前狀態：**P7 擴充方法包**（6 個方法包，見下表）。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+> 目前狀態：**P8 網頁介面**：`autoforge gui` 不用打指令就能訓練（[docs/GUI.md](docs/GUI.md)）。另有 6 個方法包（見下表）。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 
 ## 內建方法包
 
@@ -27,6 +27,12 @@
 ```bash
 pip install -e ".[dev]"        # CPU
 pip install -e ".[dev,gpu]"    # NVIDIA GPU
+```
+
+## 網頁介面
+
+```bash
+autoforge gui      # 打開瀏覽器：上傳資料 → 選任務 → 選方法 → 訓練 → 調參 → 註冊 → 預測
 ```
 
 ## 使用

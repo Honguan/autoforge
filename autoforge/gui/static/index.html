@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="autoforge-token" content="__AUTOFORGE_TOKEN__">
+  <title>AutoForge</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">AutoForge</a>
+    <nav>
+      <a href="#/" data-nav="home">總覽</a>
+      <a href="#/new" data-nav="new">新訓練</a>
+      <a href="#/runs" data-nav="runs">訓練紀錄</a>
+      <a href="#/models" data-nav="models">模型</a>
+      <a href="#/packs" data-nav="packs">方法包</a>
+    </nav>
+  </header>
+  <main id="app" aria-live="polite"></main>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>

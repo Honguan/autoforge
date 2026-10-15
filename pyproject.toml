@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "autoforge"
-version = "0.8.0"
+version = "0.9.0"
 description = "Let AI analyze, plan, train, evaluate and deploy AI models on your own hardware."
 readme = "README.md"
 requires-python = ">=3.10"

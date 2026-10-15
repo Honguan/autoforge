@@ -13,7 +13,7 @@
 | **P5 回饋迴圈** ✅ | 指標監控、診斷、Optuna、自訂程式撰寫 | `run_adjust`、`hpo` | 自動調參後指標優於初次訓練 | 2 週 |
 | **P6 部署** ✅ | 模型倉庫、匯出、推論 API、模型變 MCP 工具 | `autoforge serve <model>` | 訓練好的模型能被其他 AI 透過 MCP 呼叫 | 1–2 週 |
 | **P7 擴充** 🔄 | W2–W6 方法包、`pack_generate_from_repo` | 更多方法包 | 每個包都附 KNOWLEDGE.md 和煙霧測試 | 持續 |
-| **P8 GUI** | 網頁介面（呼叫 REST API） | `autoforge gui` | 不碰指令列也能完成一次訓練 | 3 週 |
+| **P8 GUI** ✅ | 網頁介面（呼叫 REST API） | `autoforge gui` | 不碰指令列也能完成一次訓練 | 3 週 |
 | **P9 發佈** | PyPI、Docker（CUDA image）、文件站 | v1.0 | 乾淨機器上 `pip install` 後 5 分鐘內跑完範例 | 1 週 |
 
 ## 一人開發的建議
@@ -24,6 +24,7 @@
 
 ## 實作備註
 
+- **P8**：驗收結果：Playwright 用真的 Chromium 跑完上傳 → 選任務 → 選方法（從 GitHub 索引自動安裝）→ 訓練 → 註冊 → 預測 → 自動調參，過程中沒有 JavaScript 錯誤。內建 AI 代理（`autoforge train`）的對話介面還沒放進 GUI，可以和 P9 一起評估。
 - **P7（第一批）**：新增 text-classification、llm-finetune（LoRA/QLoRA）、image-classification、timeseries-forecast、anomaly-detection，加上 tabular-classic 共 6 個方法包，每個都有 KNOWLEDGE.md 和煙霧測試。GPU 方法用極小模型在 CPU 上驗證過程式路徑，但尚未在真的 NVIDIA GPU 上跑過（QLoRA 的 4-bit 路徑只能在 GPU 驗證）。另有 `pack new` 骨架、`pack test`、MCP `pack_create`（AI 把 GitHub 專案轉成方法包）、GitHub Actions CI。
 - **P7（待做）**：物件偵測、影像分割、Embedding 微調、語音辨識（Whisper）、DPO、圖像生成 LoRA、強化學習、推薦系統、多序列預測。
 - **P6**：驗收結果：用 stdio MCP 客戶端（和 Claude Desktop 相同的連線方式）呼叫 `autoforge serve-mcp` 的 `predict_churn`，預測結果正確。每次訓練會保存方法包程式碼的快照，模型永遠用訓練它的那份程式碼來預測。

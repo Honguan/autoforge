@@ -85,7 +85,8 @@ the CLI below offers the same operations with `--json`.
 | PACK_AUTHORING_ERROR | bad name, unsafe path, pack exists | fix and retry (overwrite=true to replace) |
 | PACK_TEST_FAILED | pack smoke tests failed; `data.output_tail` | fix the pack |
 
-## Commands available now (P7)
+## Commands available now (P8)
+- `gui` (local web interface for humans; actor "human")
 - `pack new | test`
 - `model register | list | info | predict | export | import | remove`, `serve`, `serve-mcp`
 - `hpo start | status | list | stop`, `run diagnose | adjust | compare`

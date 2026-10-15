@@ -290,3 +290,41 @@ def pack_test(target: str) -> dict:
 
     path = target if Path(target).is_dir() else installer.get_installed(target)[0].path
     return test_pack(path)
+
+
+# ---------- P8: helpers for the GUI ----------
+
+
+def run_series(run_id: str, max_points: int = 500) -> dict[str, list[list[float]]]:
+    """Per-step metric curves {name: [[step, value], ...]} for charts. Final metrics (logged without a
+    step) are not curves and are left out; so are series with a single point."""
+    series: dict[str, list[list[float]]] = {}
+    for e in RunStore.open(run_id).events():
+        if e.get("type") == "metric" and e.get("step") is not None:
+            series.setdefault(e["name"], []).append([e["step"], e["value"]])
+    series = {k: v for k, v in series.items() if len(v) >= 2}
+    for name, pts in series.items():
+        if len(pts) > max_points:  # keep the shape, drop points evenly; always keep the last
+            stride = len(pts) / max_points
+            series[name] = [pts[int(k * stride)] for k in range(max_points - 1)] + [pts[-1]]
+    return series
+
+
+def task_catalog() -> list[dict]:
+    """Task types available from installed packs and the index, with the packs offering each."""
+    tasks: dict[str, set[str]] = {}
+    for rec in installer.read_lock().values():
+        try:
+            _, pack = installer.get_installed(rec.name)
+        except AutoForgeError:
+            continue
+        for t in pack.manifest.tasks:
+            tasks.setdefault(t, set()).add(pack.manifest.name)
+    try:
+        index, _ = load_index()
+        for e in index.packs:
+            for t in e.tasks:
+                tasks.setdefault(t, set()).add(e.name)
+    except AutoForgeError:
+        pass
+    return [{"task": t, "packs": sorted(p)} for t, p in sorted(tasks.items())]

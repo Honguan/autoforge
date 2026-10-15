@@ -16,6 +16,7 @@ jobs:
       - name: Install (CPU torch + every pack's dependencies)
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install -e ".[dev,anthropic,hpo,onnx]" scikit-learn pandas transformers peft accelerate timm onnx onnxscript
+          pip install -e ".[dev,anthropic,hpo,onnx]" scikit-learn pandas transformers peft accelerate timm onnx onnxscript playwright
+          python -m playwright install --with-deps chromium
       - name: Tests (core + every pack's smoke tests)
         run: pytest -q
