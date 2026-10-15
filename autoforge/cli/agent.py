@@ -18,6 +18,11 @@ _SHORT = {"hardware_profile", "pack_list", "run_status", "run_wait", "run_metric
 def _describe_plan(call: ToolCall) -> str:
     if call.name == "run_retry":
         return f"retry run {call.arguments.get('run_id')}"
+    if call.name == "hpo_start":
+        a = call.arguments
+        head = (f"  hyperparameter search: {a.get('n_trials', 10)} trials, optimise {a.get('metric')}"
+                f" ({a.get('direction') or 'auto direction'})\n")
+        return head + _describe_plan(ToolCall(call.id, "run_start", {"plan": a.get("plan")}))
     plan = call.arguments.get("plan") or {}
     task = plan.get("task") or {}
     method = (f"{plan.get('pack')} / {plan.get('recipe')}" if plan.get("pack")

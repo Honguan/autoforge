@@ -1,0 +1,9 @@
+id: score
+name: score
+task_types: [toy]
+entrypoint: trainers/toy.py:score
+requires: { device: cpu }
+defaults: { x: 0, lr: 0.01 }
+search_space:
+  x: { type: int, low: 0, high: 6 }
+  lr: { choices: [0.01, 0.1] }

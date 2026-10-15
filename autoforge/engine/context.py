@@ -50,6 +50,7 @@ class TrainContext:
         self._control = self.run_dir / "control.json"
         self._last_check = 0.0
         self._stop = False
+        self._adjust_seq = 0
 
     # ---- metrics / logging ----
 
@@ -76,6 +77,24 @@ class TrainContext:
             except (OSError, ValueError):
                 pass
         return self._stop
+
+    def check_updates(self) -> dict[str, Any]:
+        """Hyperparameter changes sent with `run adjust` since the last call (already applied to
+        self.hyperparameters). Trainers that support live changes call this between steps."""
+        try:
+            control = json.loads(self._control.read_text())
+        except (OSError, ValueError):
+            return {}
+        seq = int(control.get("adjust_seq", 0))
+        if seq <= self._adjust_seq:
+            return {}
+        self._adjust_seq = seq
+        changes = dict(control.get("overrides") or {})
+        changed = {k: v for k, v in changes.items() if self.hyperparameters.get(k) != v}
+        self.hyperparameters.update(changed)
+        if changed:
+            self.log(f"hyperparameters adjusted: {changed}")
+        return changed
 
     def check_stop(self) -> None:
         if self.should_stop():

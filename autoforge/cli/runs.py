@@ -175,3 +175,59 @@ def audit(run_id: str, as_json: bool = JsonOpt) -> None:
     with errors_as_envelope(as_json):
         rows = RunStore.open(run_id).audit_log()
     emit(as_json, rows, "\n".join(f"{r['t']}  {r['actor']:<16} {r['action']}" for r in rows))
+
+
+@run_app.command("diagnose")
+def diagnose(run_id: str, as_json: bool = JsonOpt) -> None:
+    """Findings and suggestions: failure cause, diverging/plateauing loss, overfitting, leakage."""
+    from autoforge import api
+
+    with errors_as_envelope(as_json):
+        d = api.run_diagnose(run_id)
+    lines = [d["summary"]] + [f"  [{f['severity']}] {f['code']}: {f['message']}" +
+                              (f"\n      → {f['suggestion']}" if f["suggestion"] else "") for f in d["findings"]]
+    emit(as_json, d, "\n".join(lines))
+
+
+@run_app.command("adjust")
+def adjust(
+    run_id: str,
+    set_: list[str] = typer.Option(..., "--set", help="name=value (YAML value), repeatable. e.g. --set lr=0.001"),
+    actor: str = ActorOpt,
+    as_json: bool = JsonOpt,
+) -> None:
+    """Change hyperparameters of a running run (trainer must call ctx.check_updates())."""
+    import yaml
+
+    from autoforge import api
+
+    changes = {}
+    for item in set_:
+        name, sep, value = item.partition("=")
+        if not sep or not name:
+            fail(as_json, "BAD_REQUEST", f"bad --set '{item}'", "use name=value")
+        changes[name.strip()] = yaml.safe_load(value)
+    with errors_as_envelope(as_json):
+        out = api.run_adjust(run_id, _actor(actor), changes)
+    emit(as_json, out, f"Sent {changes} to {run_id} (seq {out['seq']})")
+
+
+@run_app.command("compare")
+def compare(
+    run_ids: list[str],
+    metric: str = typer.Option(None, "--metric", "-m", help="Sort by this metric, best first."),
+    as_json: bool = JsonOpt,
+) -> None:
+    """Compare runs: metrics and the hyperparameters that differ."""
+    from autoforge import api
+
+    with errors_as_envelope(as_json):
+        c = api.run_compare(run_ids, metric)
+    diff = c["differing_hyperparameters"]
+    lines = [f"differing hyperparameters: {', '.join(diff) or '(none)'}"]
+    for r in c["runs"]:
+        m = ", ".join(f"{k}={v:.4g}" for k, v in r["metrics"].items())
+        hp = ", ".join(f"{k}={r['hyperparameters'].get(k)}" for k in diff)
+        star = " ★" if r["run_id"] == c["best_run_id"] else ""
+        lines.append(f"{r['run_id']:<40} {r['status']:<10} {m}  [{hp}]{star}")
+    emit(as_json, c, "\n".join(lines))

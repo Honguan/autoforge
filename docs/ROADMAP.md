@@ -10,7 +10,7 @@
 | **P3 執行引擎** ✅ | Run 生命週期、子行程、checkpoint、控制通道、稽核 | W1 兩個方法包（表格、文字分類） | 手寫 Plan 就能跑完訓練→評估→存模型；pause/resume/stop 正常 | 2–3 週 |
 | **P4a MCP Server** ✅ | 把 Core API 包成 MCP 工具 | `autoforge mcp` | Claude Desktop/Code 透過訂閱完成一次端到端訓練 | 1 週 |
 | **P4b 內建 Agent** ✅ | API 與本地模型的 Agent 迴圈 | `autoforge train "需求" --data x --brain ollama:qwen` | 10 個測試案例中 ≥8 個選出合理方法；敏感資料只允許本地 | 2 週 |
-| **P5 回饋迴圈** | 指標監控、診斷、Optuna、自訂程式撰寫 | `run_adjust`、`hpo` | 自動調參後指標優於初次訓練 | 2 週 |
+| **P5 回饋迴圈** ✅ | 指標監控、診斷、Optuna、自訂程式撰寫 | `run_adjust`、`hpo` | 自動調參後指標優於初次訓練 | 2 週 |
 | **P6 部署** | 模型倉庫、匯出、推論 API、模型變 MCP 工具 | `autoforge serve <model>` | 訓練好的模型能被其他 AI 透過 MCP 呼叫 | 1–2 週 |
 | **P7 擴充** | W2–W6 方法包、`pack_generate_from_repo` | 更多方法包 | 每個包都附 KNOWLEDGE.md 和煙霧測試 | 持續 |
 | **P8 GUI** | 網頁介面（呼叫 REST API） | `autoforge gui` | 不碰指令列也能完成一次訓練 | 3 週 |
@@ -24,8 +24,9 @@
 
 ## 實作備註
 
+- **P5**：驗收結果：churn 範例的 random_forest 調參 20 次後，f1_macro 從 0.679（基準）提升到 0.731。每個 trial 用同一份驗證資料打分再挑最佳，所以這個分數偏樂觀；保留測試集或交叉驗證列入後續評估工作（P6 前）。
+- **P5**：訓練中途改參數已完成（`run adjust` + `ctx.check_updates()`），需要訓練程式配合呼叫。
 - **P4b**：代理和 MCP 共用同一套工具（在同一個行程內透過 MCP 客戶端呼叫），沒有重複實作。Claude 用官方 SDK；OpenAI、Ollama、vLLM 等用 OpenAI 相容 API。
 - **P4b**：驗收標準「10 個案例中 ≥ 8 個選出合理方法」需要真的模型才能評估，列為 P5 前的評估工作（需要 API 金鑰或較大的本地模型）。
 - **P4a**：隱私守衛依 actor 判斷大腦類型（`ai:local:*` 視為本地模型）。MCP 路徑由伺服器設定的 actor 決定，AI 無法自行更改；CLI 則信任使用者宣告的 `--actor`。
 - **P4a**：Claude Desktop/Code 的實機連線待使用者驗證；自動化測試用同一個 MCP SDK 的 stdio 客戶端完成了完整流程。
-- **P3**：訓練中途改參數（「控制通道：修改參數」）需要訓練程式配合讀取新參數，和自動調參一起放到 P5。

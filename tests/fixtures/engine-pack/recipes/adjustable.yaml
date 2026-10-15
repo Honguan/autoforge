@@ -1,0 +1,6 @@
+id: adjustable
+name: adjustable
+task_types: [toy]
+entrypoint: trainers/toy.py:adjustable
+requires: { device: cpu }
+defaults: { lr: 0.1, finish: false }

@@ -26,9 +26,19 @@ AutoForge trains AI models on the user's own machine. Typical workflow:
 5. plan_validate(plan) and fix every `problems` item, then run_start(plan) → run_id.
 6. run_wait(run_id) / run_status / run_metrics while it trains; run_logs on failure.
 7. run_pause / run_resume / run_stop / run_retry to control it. The user can control the same run.
+8. Improve: run_diagnose (findings + suggestions), hpo_start (hyperparameter search; trial 0 = your plan
+   as baseline) then hpo_wait, run_compare to pick the best run, run_adjust to change parameters live.
 Every result is {"ok": bool, "data", "error": {code, message, hint}}. Branch on error.code and follow hint.
 PRIVACY_DENIED means the dataset is sensitive: never retry or work around it; tell the user.
 Always use absolute paths."""
+
+PLAN_EXAMPLE = (
+    'Example plan: {"task": {"task_type": "tabular-classification", "input_modality": "tabular", '
+    '"output_modality": "label", "target": "churned", "metric": "f1_macro"}, '
+    '"data_path": "/abs/path/data.csv", "pack": "tabular-classic", "recipe": "logistic_regression", '
+    '"hyperparameters": {"class_weight": "balanced"}}. task must be an object; pack must be installed '
+    "and recipe must be one of its recipes (see pack_info)."
+)
 
 READ = ToolAnnotations(readOnlyHint=True)
 WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
@@ -113,15 +123,16 @@ def build_server(actor: str = "ai:mcp", log_level: str = "INFO") -> MCPServer:
         return _call(lambda: api.trainer_write(filename, source))
 
     # ---- plans / runs ----
-    @tool(annotations=READ)
+    @tool(annotations=READ, description=(
+        "Check a TrainingPlan without running it: pack/recipe/task match, data and target column, GPU/VRAM, "
+        "missing packages, privacy. Returns problems, warnings, device and merged hyperparameters. " + PLAN_EXAMPLE))
     def plan_validate(plan: dict[str, Any]) -> dict[str, Any]:
-        """Check a TrainingPlan without running it: pack/recipe/task match, data and target column,
-        GPU/VRAM, missing packages, privacy. Returns problems, warnings, device and merged hyperparameters."""
         return _call(lambda: api.plan_validate(plan, actor, brain))
 
-    @tool(annotations=WRITE)
+    @tool(annotations=WRITE, description=(
+        "Validate and start training in the background. Returns immediately with run_id and status; "
+        "then call run_wait with that run_id. " + PLAN_EXAMPLE))
     def run_start(plan: dict[str, Any]) -> dict[str, Any]:
-        """Validate and start training in the background. Returns immediately with run_id and status."""
         return _call(lambda: api.run_start(plan, actor, brain))
 
     @tool(annotations=READ)
@@ -173,6 +184,56 @@ def build_server(actor: str = "ai:mcp", log_level: str = "INFO") -> MCPServer:
     def run_retry(run_id: str) -> dict[str, Any]:
         """Start a new run with the same plan, resuming from the old run's checkpoints if any."""
         return _call(lambda: api.run_retry(run_id, actor, brain))
+
+    # ---- P5: improve ----
+    @tool(annotations=READ)
+    def run_diagnose(run_id: str) -> dict[str, Any]:
+        """Findings for a run with suggestions: failure cause from logs (missing package, GPU/RAM OOM,
+        rare class, bad column...), diverging/rising/plateauing loss, overfitting, suspected data leakage.
+        Also lists the hyperparameters you can tune."""
+        return _call(lambda: api.run_diagnose(run_id))
+
+    @tool(annotations=WRITE)
+    def run_adjust(run_id: str, changes: dict[str, Any]) -> dict[str, Any]:
+        """Change hyperparameters of a RUNNING run, e.g. {"learning_rate": 0.0003}. Applied when the trainer
+        next calls ctx.check_updates(); audited and versioned. For a finished run, start a new one instead."""
+        return _call(lambda: api.run_adjust(run_id, actor, changes))
+
+    @tool(annotations=READ)
+    def run_compare(run_ids: list[str], metric: str | None = None) -> dict[str, Any]:
+        """Compare runs side by side (metrics, hyperparameters, which ones differ). With metric, sorted best
+        first and best_run_id is set."""
+        return _call(lambda: api.run_compare(run_ids, metric))
+
+    @tool(annotations=WRITE, description=(
+        "Hyperparameter search in the background (Optuna). Each trial is a normal run; trial 0 is the plan's "
+        "own hyperparameters (baseline). metric is a key of the run metrics (e.g. f1_macro, rmse); direction "
+        "is inferred (loss/error/rmse -> minimize) unless given. search_space defaults to the recipe's; format "
+        '{"name": {"type": "int"|"float", "low", "high", "log"?} or {"choices": [...]}}. '
+        "Returns study_id; then call hpo_wait. " + PLAN_EXAMPLE))
+    def hpo_start(plan: dict[str, Any], metric: str, n_trials: int = 10, direction: str | None = None,
+                  search_space: dict[str, Any] | None = None, timeout_minutes: float | None = None) -> dict[str, Any]:
+        return _call(lambda: api.hpo_start(plan, metric, n_trials, actor, brain, direction, search_space, timeout_minutes))
+
+    @tool(annotations=READ)
+    def hpo_status(study_id: str) -> dict[str, Any]:
+        """Search progress: completed/failed trials, best value/params/run, baseline value and improvement."""
+        return _call(lambda: api.hpo_status(study_id))
+
+    @tool(annotations=READ)
+    def hpo_wait(study_id: str, timeout_seconds: float = 60) -> dict[str, Any]:
+        """Wait up to timeout_seconds (max 120) for a search to finish, then return its status."""
+        return _call(lambda: api.hpo_wait(study_id, timeout_seconds))
+
+    @tool(annotations=DESTRUCTIVE)
+    def hpo_stop(study_id: str) -> dict[str, Any]:
+        """Stop a search (and its current trial run). Finished trials and the best result are kept."""
+        return _call(lambda: api.hpo_stop(study_id, actor))
+
+    @tool(annotations=READ)
+    def hpo_list(limit: int = 20) -> dict[str, Any]:
+        """Recent hyperparameter searches, newest first."""
+        return _call(lambda: api.hpo_list(limit))
 
     return server
 

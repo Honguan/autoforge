@@ -1,0 +1,5 @@
+id: needs_missing_pkg
+name: needs_missing_pkg
+task_types: [toy]
+entrypoint: trainers/toy.py:needs_missing_pkg
+requires: { device: cpu }

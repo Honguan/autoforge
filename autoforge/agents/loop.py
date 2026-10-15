@@ -22,7 +22,7 @@ from autoforge.agents.providers import Provider, ToolCall, ToolResult, ToolSpec
 from autoforge.schemas.core import BrainKind
 from autoforge.serve.mcp_server import INSTRUCTIONS, build_server
 
-GATED_TOOLS = {"run_start", "run_retry"}
+GATED_TOOLS = {"run_start", "run_retry", "hpo_start"}
 MAX_RESULT_CHARS = 20_000
 
 SYSTEM_PROMPT = """\
@@ -39,6 +39,8 @@ How to work:
   fix the plan and try again. Compare against the baseline before trying anything heavier.
 - If a tool returns USER_DECLINED, read the user's feedback in the message and revise.
 - If a tool returns PRIVACY_DENIED, stop and explain; never look for another way to read that data.
+- After a working baseline, use run_diagnose for problems and hpo_start to tune (trial 0 is the baseline);
+  report whether tuning improved the metric.
 - Finish with a short report: the method and why, the metrics, the run_id and the model path.
 """
 
@@ -148,6 +150,8 @@ async def run_agent(
                     envelope = {"ok": False, "error": {"code": "BAD_TOOL_CALL", "message": text}}
                 if call.name in ("run_start", "run_retry") and envelope.get("ok"):
                     runs.append(envelope["data"]["run_id"])
+                if call.name == "hpo_start" and envelope.get("ok"):
+                    runs.append(envelope["data"]["study_id"])
                 content = _truncate(json.dumps(envelope, ensure_ascii=False, default=str))
                 emit(AgentEvent("tool_result", {"name": call.name, "ok": envelope.get("ok"),
                                                 "error": (envelope.get("error") or {}).get("code")}))

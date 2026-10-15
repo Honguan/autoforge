@@ -7,7 +7,7 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> 目前狀態：**P4b 內建 AI 代理**。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+> 目前狀態：**P5 回饋迴圈**（診斷、自動調參、即時調整，見 [docs/IMPROVE.md](docs/IMPROVE.md)）。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 
 ## 安裝
 
@@ -45,6 +45,15 @@ autoforge run retry <run_id>                         # 同計畫重跑，從 che
 每次訓練的所有檔案都在 `~/.autoforge/runs/<run_id>/`：計畫、模型、checkpoint、日誌、指標、稽核紀錄，計畫和 AI 寫的程式會用 git 版本管理。
 
 方法包格式見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)，索引放在本 repo 的 [`packs-index` 分支](https://github.com/Honguan/autoforge/tree/packs-index)。
+
+## 改進模型
+
+```bash
+autoforge run diagnose <run_id>                                       # 找問題、給建議
+autoforge hpo start examples/churn_plan.yaml -m f1_macro -n 20 --wait # 自動調參（trial 0 = 基準）
+autoforge run adjust <run_id> --set learning_rate=0.0003              # 訓練中途改參數
+autoforge run compare <id1> <id2> -m f1_macro                         # 比較
+```
 
 ## 一句話訓練（內建 AI 代理）
 

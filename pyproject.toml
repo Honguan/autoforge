@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "autoforge"
-version = "0.5.0"
+version = "0.6.0"
 description = "Let AI analyze, plan, train, evaluate and deploy AI models on your own hardware."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,7 +21,8 @@ dependencies = [
 [project.optional-dependencies]
 gpu = ["torch>=2.3", "nvidia-ml-py>=12.0"]
 anthropic = ["anthropic>=1.14,<2"]
-dev = ["pytest>=8.0"]
+hpo = ["optuna>=5.0,<6"]
+dev = ["pytest>=8.0", "optuna>=5.0,<6"]
 
 [project.scripts]
 autoforge = "autoforge.cli.main:app"

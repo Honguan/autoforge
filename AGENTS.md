@@ -41,6 +41,14 @@ the CLI below offers the same operations with `--json`.
 6. Custom trainers: set `custom_code_path: my_trainer.py[:function]` instead of pack+recipe.
    The code is copied into the run and committed to the run's git repo. Contract: docs/PACK_SPEC.md §5.
 
+## Improving a model (P5)
+- `run diagnose <id>` / MCP `run_diagnose`: findings (failure cause, divergence, plateau, overfitting,
+  leakage) with suggestions and the tunable hyperparameters.
+- `hpo start plan.yaml -m <metric> -n <trials>` / MCP `hpo_start` → `hpo_wait`: search; trial 0 is the
+  plan's own hyperparameters (baseline); report `improvement`.
+- `run adjust <id> --set k=v` / MCP `run_adjust`: change a live run (trainer must call ctx.check_updates()).
+- `run compare <ids...> -m <metric>` / MCP `run_compare`: pick the best run.
+
 ## Error codes
 | code | meaning | what to do |
 |---|---|---|
@@ -55,8 +63,11 @@ the CLI below offers the same operations with `--json`.
 | RUN_STATE_ERROR | action not possible in the run's current state | check `run status` |
 | PRIVACY_DENIED | dataset is sensitive and you are not a local model | stop; tell the user |
 | BAD_REQUEST | invalid argument (e.g. trainer filename, syntax error) | fix and retry |
+| STUDY_NOT_FOUND | unknown study_id | `hpo list` |
+| HPO_UNAVAILABLE | optuna not installed | tell the user: pip install "autoforge[hpo]" |
 
-## Commands available now (P4b)
+## Commands available now (P5)
+- `hpo start | status | list | stop`, `run diagnose | adjust | compare`
 - `train "<goal>" --data <path> --brain <provider:model>` (built-in agent; see docs/AGENT.md)
 - `mcp` (MCP server over stdio), `data mark | list | profile`
 - `version`, `doctor`, `schema [Name]`

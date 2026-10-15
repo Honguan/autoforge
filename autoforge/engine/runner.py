@@ -7,6 +7,7 @@ Stop asks nicely first (ctx.check_stop()), then terminates after a grace period.
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -62,16 +63,7 @@ class RunView(BaseModel):
 
 
 def _process(store: RunStore) -> psutil.Process | None:
-    info = store.proc()
-    if not info:
-        return None
-    try:
-        p = psutil.Process(info["pid"])
-        if abs(p.create_time() - info["create_time"]) > 1 or p.status() == psutil.STATUS_ZOMBIE:
-            return None
-        return p
-    except psutil.Error:
-        return None
+    return process_alive(store.proc())
 
 
 def _tree(p: psutil.Process) -> list[psutil.Process]:
@@ -97,6 +89,7 @@ def create_run(
     resume_from: str | None = None,
     retry_of: str | None = None,
     brain: BrainKind | None = None,
+    study_id: str | None = None,
 ) -> RunStore:
     require_data_access(plan, actor, brain)
     check = require_valid(plan, hardware)
@@ -127,33 +120,53 @@ def create_run(
         pack_source=check.pack_source,
         resume_from=resume_from,
         retry_of=retry_of,
+        study_id=study_id,
     )
     store.write_record(rec)
     store.write_state(RunState())
     store.write_control(paused=False, stop_requested=False)
     rec.git_tracked = store.git_commit("create run", actor)
     store.write_record(rec)
-    store.audit(actor, "create", warnings=check.warnings, retry_of=retry_of)
+    store.audit(actor, "create", warnings=check.warnings, retry_of=retry_of, study_id=study_id)
     return store
 
 
-def start(store: RunStore, actor: str = "human") -> None:
-    if store.proc() is not None:
-        raise RunStateError(f"run {store.run_id} was already started")
-    log = (store.dir / "logs.txt").open("ab")
-    kwargs: dict = {"stdout": log, "stderr": subprocess.STDOUT, "stdin": subprocess.DEVNULL, "cwd": store.dir}
+def spawn_detached(module: str, workdir: Path) -> tuple[int, float]:
+    """Start `python -m <module> <workdir>` detached from the caller; output goes to workdir/logs.txt."""
+    log = (workdir / "logs.txt").open("ab")
+    kwargs: dict = {"stdout": log, "stderr": subprocess.STDOUT, "stdin": subprocess.DEVNULL, "cwd": workdir}
     if os.name == "nt":
         kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
     else:
         kwargs["start_new_session"] = True  # survive the CLI exiting
-    proc = subprocess.Popen([sys.executable, "-m", "autoforge.engine.worker", str(store.dir)], **kwargs)
+    proc = subprocess.Popen([sys.executable, "-m", module, str(workdir)], **kwargs)
     log.close()
     try:
         create_time = psutil.Process(proc.pid).create_time()
     except psutil.Error:
         create_time = 0.0
-    store.write_proc(proc.pid, create_time)
-    store.audit(actor, "start", pid=proc.pid)
+    return proc.pid, create_time
+
+
+def process_alive(info: dict | None) -> psutil.Process | None:
+    """The process described by {"pid", "create_time"} if it is still running (not a zombie)."""
+    if not info:
+        return None
+    try:
+        p = psutil.Process(info["pid"])
+        if abs(p.create_time() - info["create_time"]) > 1 or p.status() == psutil.STATUS_ZOMBIE:
+            return None
+        return p
+    except psutil.Error:
+        return None
+
+
+def start(store: RunStore, actor: str = "human") -> None:
+    if store.proc() is not None:
+        raise RunStateError(f"run {store.run_id} was already started")
+    pid, create_time = spawn_detached("autoforge.engine.worker", store.dir)
+    store.write_proc(pid, create_time)
+    store.audit(actor, "start", pid=pid)
 
 
 # ---------- status ----------
@@ -268,6 +281,46 @@ def stop(store: RunStore, actor: str = "human", grace_seconds: float = 10.0) -> 
         store.audit("system", "terminate", reason="grace period expired")
     wait_for(lambda: _process(store) is None, 5)
     return status(store)
+
+
+def adjust(store: RunStore, actor: str, changes: dict) -> dict:
+    """Send hyperparameter changes to a live run. Takes effect when the trainer calls
+    ctx.check_updates(); every change is audited and committed to the run's git repo."""
+    if not changes:
+        raise RunStateError("no changes given")
+    _require_live(store, "adjust")
+    control = store.control()
+    overrides = (control.get("overrides") or {}) | changes
+    seq = int(control.get("adjust_seq", 0)) + 1
+    store.write_control(overrides=overrides, adjust_seq=seq)
+    (store.dir / "adjustments.yaml").write_text(
+        yaml.safe_dump(overrides, allow_unicode=True, sort_keys=True), encoding="utf-8")
+    store.git_commit(f"adjust {changes}", actor)
+    store.audit(actor, "adjust", changes=changes, seq=seq)
+    return {"run_id": store.run_id, "overrides": overrides, "seq": seq,
+            "note": "applied when the trainer next calls ctx.check_updates(); trainers that never call it ignore changes"}
+
+
+def compare(run_ids: list[str], metric: str | None = None) -> dict:
+    """Side-by-side metrics and hyperparameters; sorted by `metric` (best first) when given."""
+    from autoforge.engine.hpo import infer_direction
+
+    rows = []
+    for rid in run_ids:
+        s = RunStore.open(rid)
+        v, rec = status(s), s.record()
+        rows.append({"run_id": rid, "status": v.status.value, "recipe": v.recipe or "custom",
+                     "hyperparameters": rec.plan.hyperparameters, "metrics": v.metrics or v.latest_metrics})
+    keys = sorted({k for r in rows for k in r["hyperparameters"]})
+    differing = [k for k in keys if len({json.dumps(r["hyperparameters"].get(k), sort_keys=True) for r in rows}) > 1]
+    best = None
+    if metric:
+        scored = [r for r in rows if metric in r["metrics"]]
+        rev = infer_direction(metric) == "maximize"
+        scored.sort(key=lambda r: r["metrics"][metric], reverse=rev)
+        rows = scored + [r for r in rows if metric not in r["metrics"]]
+        best = scored[0]["run_id"] if scored else None
+    return {"metric": metric, "best_run_id": best, "differing_hyperparameters": differing, "runs": rows}
 
 
 def retry(store: RunStore, actor: str = "human", brain: BrainKind | None = None) -> RunStore:

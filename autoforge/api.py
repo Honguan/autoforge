@@ -173,3 +173,65 @@ def run_retry(run_id: str, actor: str, brain: BrainKind) -> dict:
     store = runner.retry(RunStore.open(run_id), actor, brain=brain)
     runner.start(store, actor)
     return runner.status(store).model_dump(mode="json")
+
+
+# ---------- P5: diagnosis, live adjustment, comparison, hyperparameter search ----------
+
+
+def run_diagnose(run_id: str) -> dict:
+    from autoforge.engine.diagnose import diagnose
+
+    return diagnose(RunStore.open(run_id))
+
+
+def run_adjust(run_id: str, actor: str, changes: dict[str, Any]) -> dict:
+    return runner.adjust(RunStore.open(run_id), actor, changes)
+
+
+def run_compare(run_ids: list[str], metric: str | None = None) -> dict:
+    if not run_ids:
+        raise BadRequest("give at least one run_id")
+    return runner.compare(run_ids, metric)
+
+
+def hpo_start(
+    plan: dict[str, Any], metric: str, n_trials: int, actor: str, brain: BrainKind,
+    direction: str | None = None, search_space: dict[str, Any] | None = None,
+    timeout_minutes: float | None = None, base: Path | None = None,
+) -> dict:
+    from autoforge.engine import hpo
+
+    if direction not in (None, "maximize", "minimize"):
+        raise BadRequest("direction must be 'maximize' or 'minimize'")
+    store = hpo.create_study(_plan(plan, base), metric, n_trials, actor, brain, direction, search_space, timeout_minutes)
+    hpo.start_study(store)
+    return hpo.status(store).model_dump(mode="json")
+
+
+def hpo_status(study_id: str) -> dict:
+    from autoforge.engine import hpo
+
+    return hpo.status(hpo.StudyStore.open(study_id)).model_dump(mode="json")
+
+
+def hpo_wait(study_id: str, timeout_seconds: float = 60) -> dict:
+    from autoforge.engine import hpo
+
+    return hpo.wait(hpo.StudyStore.open(study_id), max(0.0, min(timeout_seconds, 120.0))).model_dump(mode="json")
+
+
+def hpo_stop(study_id: str, actor: str) -> dict:
+    from autoforge.engine import hpo
+
+    return hpo.stop(hpo.StudyStore.open(study_id), actor).model_dump(mode="json")
+
+
+def hpo_list(limit: int = 20) -> list[dict]:
+    from autoforge.engine import hpo
+
+    out = []
+    for s in hpo.list_studies()[:limit]:
+        v = hpo.status(s).model_dump(mode="json")
+        v.pop("trials", None)
+        out.append(v)
+    return out

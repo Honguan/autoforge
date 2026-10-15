@@ -65,6 +65,7 @@ def train(ctx) -> dict:
 | `output_dir`, `checkpoint_dir` | 模型輸出和 checkpoint 資料夾 |
 | `log(msg)`, `log_metric(name, value, step)` | 即時紀錄，`run metrics` 和 `run start --wait` 會顯示 |
 | `check_stop()` / `should_stop()` | 配合停止要求 |
+| `check_updates()` | 取得 `run adjust` 送來的參數修改（已套用到 `hyperparameters`），回傳有變動的項目 |
 | `latest_checkpoint()` | 用 `run retry` 重跑時，回傳上一次最新的 checkpoint |
 
 - 暫停（pause）不需要訓練程式配合，引擎會直接凍結整個行程。

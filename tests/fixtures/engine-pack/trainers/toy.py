@@ -30,3 +30,26 @@ def crash(ctx):
 def stubborn(ctx):
     while True:
         time.sleep(0.1)
+
+
+def adjustable(ctx):
+    seen = []
+    for step in range(100000):
+        ctx.check_stop()
+        if ctx.check_updates():
+            seen.append(ctx.hyperparameters["lr"])
+            ctx.log_metric("lr", ctx.hyperparameters["lr"], step=step)
+        if ctx.hyperparameters.get("finish"):
+            return {"metrics": {"final_lr": ctx.hyperparameters["lr"]}}
+        time.sleep(0.05)
+
+
+def score(ctx):
+    """Deterministic objective for search tests: best at x=3, lr=0.1 adds a bonus."""
+    x = ctx.hyperparameters["x"]
+    bonus = 0.5 if ctx.hyperparameters.get("lr") == 0.1 else 0.0
+    return {"metrics": {"score": 10 - (x - 3) ** 2 + bonus, "loss": (x - 3) ** 2}}
+
+
+def needs_missing_pkg(ctx):
+    import autoforge_no_such_module  # noqa: F401

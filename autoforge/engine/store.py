@@ -55,6 +55,7 @@ class RunRecord(BaseModel):
     pack_source: str | None = None
     resume_from: str | None = None
     retry_of: str | None = None
+    study_id: str | None = None
     git_tracked: bool = False
 
 
@@ -149,7 +150,7 @@ class RunStore:
         p = self.dir / "control.json"
         return json.loads(p.read_text()) if p.is_file() else {"paused": False, "stop_requested": False}
 
-    def write_control(self, **changes: bool) -> None:
+    def write_control(self, **changes: Any) -> None:
         _atomic_write(self.dir / "control.json", json.dumps(self.control() | changes))
 
     # ---- events / audit ----

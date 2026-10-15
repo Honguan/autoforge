@@ -10,6 +10,7 @@ from autoforge.cli.output import JsonOpt, emit, fail
 from autoforge.cli.packs import index_app, pack_app
 from autoforge.cli.agent import train
 from autoforge.cli.data import data_app
+from autoforge.cli.hpo import hpo_app
 from autoforge.cli.runs import plan_app, run_app
 from autoforge.hardware.detect import detect_hardware
 from autoforge.engine.runner import RunView
@@ -23,6 +24,7 @@ app.add_typer(index_app, name="index")
 app.add_typer(plan_app, name="plan")
 app.add_typer(run_app, name="run")
 app.add_typer(data_app, name="data")
+app.add_typer(hpo_app, name="hpo")
 app.command()(train)
 
 ALL_SCHEMAS = SCHEMAS | {
