@@ -67,11 +67,11 @@ def train(ctx: dict) -> dict:
 
 1. 把包放到 GitHub（獨立 repo 或某個 repo 的子目錄）
 2. 取得要發佈的 commit SHA
-3. 在索引 repo 執行：
+3. 切到 `packs-index` 分支執行：
    ```bash
    autoforge index add index.json ./<pack> --source github:<owner>/<repo>[/<subdir>] --commit <sha> --tag <keyword>
    autoforge index validate index.json
    ```
-4. 發 PR 到索引 repo
+4. 發 PR 到 `packs-index` 分支
 
 安裝時，AutoForge 會確認抓下來的 commit 和索引記錄的 SHA 一致，不一致就拒絕安裝（`SHA_MISMATCH`）。

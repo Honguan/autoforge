@@ -33,7 +33,7 @@ autoforge pack info tabular-classic --json       # 給 AI 讀的知識和方法
 autoforge pack list
 ```
 
-方法包格式見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)，索引在 [Honguan/autoforge-packs-index](https://github.com/Honguan/autoforge-packs-index)。
+方法包格式見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)，索引放在本 repo 的 [`packs-index` 分支](https://github.com/Honguan/autoforge/tree/packs-index)。
 
 ## 測試
 

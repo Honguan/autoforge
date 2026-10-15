@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 DEFAULT_INDEX_URL = (
-    "https://raw.githubusercontent.com/Honguan/autoforge-packs-index/main/index.json"
+    "https://raw.githubusercontent.com/Honguan/autoforge/packs-index/index.json"
 )
 
 

@@ -107,15 +107,19 @@ profile_dataset ──┼─▶ TaskSpec ─▶ pack_search ─▶ TrainingPlan 
 
 ## 4. 方法包（Pack）與 GitHub
 
-### 4.1 推薦方案：「GitHub Repo + 中央索引 + 版本鎖定」
+### 4.1 採用方案：「GitHub Repo + 索引分支 + 版本鎖定」
 
 ```
 GitHub
-├── <owner>/autoforge-pack-text-classification   ← 每個包是一個 repo
-├── <owner>/autoforge-pack-llm-lora                 （加上 topic: autoforge-pack）
-└── <owner>/autoforge-packs-index                ← 中央索引 repo
-    └── index.json   [{name, repo, version, commit_sha, tasks, requires, summary}]
+├── Honguan/autoforge
+│   ├── main 分支：packs/tabular-classic/ …        ← 官方方法包放在子目錄
+│   └── packs-index 分支（獨立歷史）                ← 中央索引
+│       └── index.json   [{name, source, version, commit_sha, tasks, recipes, summary}]
+└── <任何人>/autoforge-pack-xxx                    ← 第三方方法包可以是獨立 repo
 ```
+
+索引放在獨立歷史的分支，好處是不用另外建 repo，又不會和程式碼的 commit 混在一起。
+讀取網址：`https://raw.githubusercontent.com/Honguan/autoforge/packs-index/index.json`
 
 為什麼這樣對 AI 最好呼叫：
 

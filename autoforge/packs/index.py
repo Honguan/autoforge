@@ -1,4 +1,4 @@
-"""Pack index: one index.json (normally in the autoforge-packs-index repo)
+"""Pack index: one index.json (normally on the packs-index branch)
 that lets an AI find packs in a single structured call, without crawling GitHub."""
 
 from __future__ import annotations
