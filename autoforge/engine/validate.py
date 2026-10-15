@@ -30,6 +30,9 @@ class PlanCheck(BaseModel):
     hyperparameters: dict = Field(default_factory=dict, description="recipe defaults merged with the plan")
     pack_version: str | None = None
     pack_source: str | None = None
+    pack_root: str | None = None
+    predictor: str | None = Field(default=None, description="predictor module, relative to the pack root")
+    exporters: dict[str, str] = Field(default_factory=dict)
 
 
 def load_plan_file(path: Path) -> TrainingPlan:
@@ -136,6 +139,8 @@ def check_plan(plan: TrainingPlan, hardware: HardwareProfile | None = None) -> P
                     warnings.append(f"hyperparameters not declared by the recipe: {sorted(unknown)}")
                 file, func = recipe.entrypoint.rsplit(":", 1)
                 out.entrypoint = f"{(pack.root / file).resolve()}:{func}"
+                out.pack_root = str(pack.root)
+                out.predictor, out.exporters = recipe.predictor, dict(recipe.exporters)
                 out.hyperparameters = recipe.defaults | plan.hyperparameters
             missing = installer.missing_dependencies(pack)
             if missing:

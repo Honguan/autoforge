@@ -235,3 +235,42 @@ def hpo_list(limit: int = 20) -> list[dict]:
         v.pop("trials", None)
         out.append(v)
     return out
+
+
+# ---------- P6: model registry and serving ----------
+
+
+def model_register(run_id: str, name: str, actor: str, description: str = "") -> dict:
+    from autoforge.registry import models as reg
+
+    return reg.register(run_id, name, actor, description).model_dump(mode="json")
+
+
+def model_list() -> list[dict]:
+    from autoforge.registry import models as reg
+
+    return [{"model": c.ref, "task": c.task.task_type, "target": c.task.target, "metrics": c.metrics,
+             "servable": c.servable, "run_id": c.run_id, "versions": reg.versions(c.name)} for c in reg.list_models()]
+
+
+def model_info(ref: str) -> dict:
+    from autoforge.registry import models as reg
+
+    card = reg.get_card(ref)
+    return card.model_dump(mode="json") | {"versions": reg.versions(card.name),
+                                           "export_formats": ["bundle", *card.exporters]}
+
+
+def model_predict(ref: str, rows: list[dict[str, Any]]) -> dict:
+    from autoforge.registry import models as reg
+
+    return reg.predict(ref, rows)
+
+
+def model_export(ref: str, fmt: str, out: str | None = None) -> dict:
+    from autoforge.registry import models as reg
+
+    card = reg.get_card(ref)
+    suffix = {"bundle": "zip"}.get(fmt, fmt)
+    path = Path(out) if out else config.home() / "exports" / f"{card.name}-v{card.version}.{suffix}"
+    return reg.export(ref, fmt, path)

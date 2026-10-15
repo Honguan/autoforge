@@ -11,9 +11,11 @@ from autoforge.cli.packs import index_app, pack_app
 from autoforge.cli.agent import train
 from autoforge.cli.data import data_app
 from autoforge.cli.hpo import hpo_app
+from autoforge.cli.models import model_app, serve, serve_mcp
 from autoforge.cli.runs import plan_app, run_app
 from autoforge.hardware.detect import detect_hardware
 from autoforge.engine.runner import RunView
+from autoforge.registry.models import ModelCard
 from autoforge.packs.index import IndexEntry, PackIndex
 from autoforge.packs.manifest import PackManifest, RecipeSpec
 from autoforge.schemas.core import SCHEMAS
@@ -25,6 +27,9 @@ app.add_typer(plan_app, name="plan")
 app.add_typer(run_app, name="run")
 app.add_typer(data_app, name="data")
 app.add_typer(hpo_app, name="hpo")
+app.add_typer(model_app, name="model")
+app.command()(serve)
+app.command("serve-mcp")(serve_mcp)
 app.command()(train)
 
 ALL_SCHEMAS = SCHEMAS | {
@@ -33,6 +38,7 @@ ALL_SCHEMAS = SCHEMAS | {
     "PackIndex": PackIndex,
     "IndexEntry": IndexEntry,
     "RunView": RunView,
+    "ModelCard": ModelCard,
 }
 
 

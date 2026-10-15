@@ -9,3 +9,6 @@ defaults: { C: 1.0, max_iter: 1000, class_weight: null }
 search_space:
   C: { type: float, low: 0.001, high: 100, log: true }
   class_weight: { choices: [null, balanced] }
+predictor: trainers/sklearn_trainers.py
+exporters:
+  onnx: trainers/sklearn_trainers.py:export_onnx

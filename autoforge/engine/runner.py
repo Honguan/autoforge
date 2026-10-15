@@ -76,6 +76,17 @@ def _tree(p: psutil.Process) -> list[psutil.Process]:
 # ---------- create / start ----------
 
 
+def _defines(path: Path, *funcs: str) -> bool:
+    import ast
+
+    try:
+        tree = ast.parse(Path(path).read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return False
+    names = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+    return all(f in names for f in funcs)
+
+
 def require_data_access(plan: TrainingPlan, actor: str, brain: BrainKind | None = None) -> None:
     """Privacy guard (requirement #8): sensitive data only under a local model or a human."""
     b = brain or brain_from_actor(actor)
@@ -97,7 +108,7 @@ def create_run(
     store = RunStore(runs_dir() / new_run_id(plan))
     store.dir.mkdir(parents=True)
 
-    entrypoint = check.entrypoint
+    entrypoint, predictor, exporters = check.entrypoint, None, {}
     if plan.custom_code_path:  # snapshot AI-written code into the run so it is versioned
         file, func = entrypoint.rsplit(":", 1)
         code_dir = store.dir / "code"
@@ -105,6 +116,19 @@ def create_run(
         dest = code_dir / Path(file).name
         shutil.copy2(file, dest)
         entrypoint = f"{dest}:{func}"
+        if _defines(dest, "load_model", "predict"):
+            predictor = str(dest)
+    elif check.pack_root:
+        # Snapshot the pack's code: training, serving and export all use exactly this version.
+        snap = store.dir / "pack"
+        shutil.copytree(check.pack_root, snap, ignore=shutil.ignore_patterns("tests", ".git", "__pycache__"))
+        root = Path(check.pack_root).resolve()
+        file, func = entrypoint.rsplit(":", 1)
+        entrypoint = f"{snap / Path(file).resolve().relative_to(root)}:{func}"
+        if check.predictor:
+            predictor = str(snap / check.predictor)
+        exporters = {fmt: str(snap / ep.rsplit(":", 1)[0]) + ":" + ep.rsplit(":", 1)[1]
+                     for fmt, ep in check.exporters.items()}
 
     (store.dir / "plan.yaml").write_text(
         yaml.safe_dump(effective.model_dump(mode="json"), allow_unicode=True, sort_keys=False), encoding="utf-8"
@@ -121,6 +145,8 @@ def create_run(
         resume_from=resume_from,
         retry_of=retry_of,
         study_id=study_id,
+        predictor=predictor,
+        exporters=exporters,
     )
     store.write_record(rec)
     store.write_state(RunState())

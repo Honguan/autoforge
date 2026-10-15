@@ -56,6 +56,8 @@ class RunRecord(BaseModel):
     resume_from: str | None = None
     retry_of: str | None = None
     study_id: str | None = None
+    predictor: str | None = Field(default=None, description="absolute path of the predictor module snapshot")
+    exporters: dict[str, str] = Field(default_factory=dict, description="format -> absolute 'file.py:function'")
     git_tracked: bool = False
 
 

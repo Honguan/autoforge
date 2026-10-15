@@ -60,7 +60,11 @@ AI 會依序呼叫：`hardware_profile` → `data_profile` → `pack_search` →
 
 所有工具都回傳 `{"ok": bool, "data": ..., "error": {code, message, hint}}`。
 
-## 5. 人和 AI 一起操作
+## 5. 只開放「使用模型」：`autoforge serve-mcp`
+
+如果只想讓 AI 呼叫訓練好的模型，不讓它訓練或讀取資料，可以改用 `autoforge serve-mcp`：每個模型會變成一個 `predict_<名稱>` 工具。詳見 [DEPLOY.md](DEPLOY.md)。
+
+## 6. 人和 AI 一起操作
 
 AI 透過 MCP 開始的訓練，你也可以從 CLI 看狀態和控制，反過來也一樣：
 
@@ -72,7 +76,7 @@ autoforge run audit <run_id>     # 看哪些動作是你做的、哪些是 AI �
 
 `--actor` 設定的名稱會記錄在稽核紀錄裡。
 
-## 6. 隱私（需求 #8）
+## 7. 隱私（需求 #8）
 
 用 CLI 標記資料的敏感度。只有人能標記，MCP 沒有提供這個工具，所以 AI 不能降低資料的敏感度。
 

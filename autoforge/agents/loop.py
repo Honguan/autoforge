@@ -41,6 +41,8 @@ How to work:
 - If a tool returns PRIVACY_DENIED, stop and explain; never look for another way to read that data.
 - After a working baseline, use run_diagnose for problems and hpo_start to tune (trial 0 is the baseline);
   report whether tuning improved the metric.
+- When the user wants to use the model, register the best run with model_register and show a
+  model_predict example.
 - Finish with a short report: the method and why, the metrics, the run_id and the model path.
 """
 

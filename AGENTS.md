@@ -49,6 +49,13 @@ the CLI below offers the same operations with `--json`.
 - `run adjust <id> --set k=v` / MCP `run_adjust`: change a live run (trainer must call ctx.check_updates()).
 - `run compare <ids...> -m <metric>` / MCP `run_compare`: pick the best run.
 
+## Deploying a model (P6)
+- `model register <run_id> --name <name>` / MCP `model_register`: versioned model (name:vN) with a card
+  (features, labels, metrics). Only succeeded runs; servable when the recipe has a predictor.
+- `model predict <name> --rows '[{...}]'` / MCP `model_predict`: rows need every feature from `model info`.
+- `model export <name> --format bundle|onnx` / MCP `model_export`.
+- Humans run `autoforge serve` (REST) and `autoforge serve-mcp` (each model as tool `predict_<name>`).
+
 ## Error codes
 | code | meaning | what to do |
 |---|---|---|
@@ -65,8 +72,13 @@ the CLI below offers the same operations with `--json`.
 | BAD_REQUEST | invalid argument (e.g. trainer filename, syntax error) | fix and retry |
 | STUDY_NOT_FOUND | unknown study_id | `hpo list` |
 | HPO_UNAVAILABLE | optuna not installed | tell the user: pip install "autoforge[hpo]" |
+| MODEL_NOT_FOUND | unknown model or version | `model list` |
+| MODEL_NOT_SERVABLE | recipe has no predictor | train with a recipe that has one |
+| INVALID_INPUT | rows missing features / wrong types; `data.features` lists them | fix the rows |
+| MODEL_ERROR | register/export/predict failed | read the message |
 
-## Commands available now (P5)
+## Commands available now (P6)
+- `model register | list | info | predict | export | import | remove`, `serve`, `serve-mcp`
 - `hpo start | status | list | stop`, `run diagnose | adjust | compare`
 - `train "<goal>" --data <path> --brain <provider:model>` (built-in agent; see docs/AGENT.md)
 - `mcp` (MCP server over stdio), `data mark | list | profile`

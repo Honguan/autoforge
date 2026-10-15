@@ -10,3 +10,6 @@ search_space:
   n_estimators: { type: int, low: 100, high: 1000 }
   max_depth: { choices: [null, 6, 12, 24] }
   min_samples_leaf: { type: int, low: 1, high: 20 }
+predictor: trainers/sklearn_trainers.py
+exporters:
+  onnx: trainers/sklearn_trainers.py:export_onnx

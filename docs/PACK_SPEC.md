@@ -38,6 +38,8 @@
 | `good_for` / `avoid_when` | 給 AI 選方法用的一句話 |
 | `defaults` | 預設超參數 |
 | `search_space` | 自動調參範圍：`{type, low, high, log}` 或 `{choices}` |
+| `predictor` | 選填。預測用的模組 `trainers/x.py`，必須定義 `load_model(model_dir)` 和 `predict(model, rows)`（見 docs/DEPLOY.md） |
+| `exporters` | 選填。匯出格式對應函式，例如 `{onnx: trainers/x.py:export_onnx}` |
 
 ## 4. KNOWLEDGE.md 建議段落
 

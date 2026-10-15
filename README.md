@@ -7,7 +7,7 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> 目前狀態：**P5 回饋迴圈**（診斷、自動調參、即時調整，見 [docs/IMPROVE.md](docs/IMPROVE.md)）。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+> 目前狀態：**P6 部署**（模型註冊、REST API、模型變成 MCP 工具、ONNX 匯出，見 [docs/DEPLOY.md](docs/DEPLOY.md)）。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 
 ## 安裝
 
@@ -53,6 +53,16 @@ autoforge run diagnose <run_id>                                       # 找問�
 autoforge hpo start examples/churn_plan.yaml -m f1_macro -n 20 --wait # 自動調參（trial 0 = 基準）
 autoforge run adjust <run_id> --set learning_rate=0.0003              # 訓練中途改參數
 autoforge run compare <id1> <id2> -m f1_macro                         # 比較
+```
+
+## 部署
+
+```bash
+autoforge model register <run_id> --name churn      # 註冊成模型（v1、v2…）
+autoforge model predict churn --rows '[{...}]'       # 預測
+autoforge serve                                      # REST API（127.0.0.1:8000）
+autoforge serve-mcp                                  # 每個模型變成 MCP 工具 predict_<名稱>，給其他 AI 呼叫
+autoforge model export churn --format onnx           # 匯出
 ```
 
 ## 一句話訓練（內建 AI 代理）

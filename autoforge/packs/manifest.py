@@ -40,6 +40,13 @@ class RecipeSpec(BaseModel):
     search_space: dict[str, Any] = Field(
         default_factory=dict, description="hyperparameter -> {type, low, high} or {choices}"
     )
+    predictor: str | None = Field(
+        default=None,
+        description="module 'trainers/file.py' defining load_model(model_dir) and predict(model, rows) for serving",
+    )
+    exporters: dict[str, str] = Field(
+        default_factory=dict, description="format -> 'file.py:function', e.g. {onnx: trainers/x.py:export_onnx}"
+    )
 
     @field_validator("id")
     @classmethod
@@ -103,22 +110,25 @@ def _fmt(e: ValidationError, where: str) -> list[str]:
     return [f"{where}: {'.'.join(map(str, err['loc'])) or '<root>'}: {err['msg']}" for err in e.errors()]
 
 
-def _check_entrypoint(root: Path, entrypoint: str, where: str) -> list[str]:
-    if ":" not in entrypoint:
-        return [f"{where}: entrypoint must look like 'trainers/file.py:function'"]
-    rel, func = entrypoint.rsplit(":", 1)
+def _check_functions(root: Path, rel: str, funcs: list[str], where: str, label: str) -> list[str]:
     path = (root / rel).resolve()
     if not path.is_relative_to(root.resolve()):
-        return [f"{where}: entrypoint escapes the pack directory"]
+        return [f"{where}: {label} escapes the pack directory"]
     if not path.is_file():
-        return [f"{where}: entrypoint file not found: {rel}"]
+        return [f"{where}: {label} file not found: {rel}"]
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"))
     except SyntaxError as e:
         return [f"{where}: {rel} has a syntax error: {e}"]
-    if not any(isinstance(n, ast.FunctionDef) and n.name == func for n in tree.body):
-        return [f"{where}: function '{func}' not defined at top level of {rel}"]
-    return []
+    defined = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}
+    return [f"{where}: function '{f}' not defined at top level of {rel}" for f in funcs if f not in defined]
+
+
+def _check_entrypoint(root: Path, entrypoint: str, where: str, label: str = "entrypoint") -> list[str]:
+    if ":" not in entrypoint:
+        return [f"{where}: {label} must look like 'trainers/file.py:function'"]
+    rel, func = entrypoint.rsplit(":", 1)
+    return _check_functions(root, rel, [func], where, label)
 
 
 def collect_problems(root: Path) -> tuple[Pack | None, list[str]]:
@@ -164,6 +174,10 @@ def collect_problems(root: Path) -> tuple[Pack | None, list[str]]:
             if recipe.requires.min_vram_gb > 0 and recipe.requires.device == "cpu":
                 problems.append(f"{where}: device 'cpu' cannot require VRAM")
             problems += _check_entrypoint(root, recipe.entrypoint, where)
+            if recipe.predictor:
+                problems += _check_functions(root, recipe.predictor, ["load_model", "predict"], where, "predictor")
+            for fmt, ep in recipe.exporters.items():
+                problems += _check_entrypoint(root, ep, where, f"exporter '{fmt}'")
             recipes.append(recipe)
 
     if problems or manifest is None:

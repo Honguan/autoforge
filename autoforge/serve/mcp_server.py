@@ -28,6 +28,8 @@ AutoForge trains AI models on the user's own machine. Typical workflow:
 7. run_pause / run_resume / run_stop / run_retry to control it. The user can control the same run.
 8. Improve: run_diagnose (findings + suggestions), hpo_start (hyperparameter search; trial 0 = your plan
    as baseline) then hpo_wait, run_compare to pick the best run, run_adjust to change parameters live.
+9. Deploy: model_register(best run_id, name) turns a run into a versioned model; model_predict uses it;
+   model_export makes a portable bundle (or ONNX). The user serves models with `autoforge serve`.
 Every result is {"ok": bool, "data", "error": {code, message, hint}}. Branch on error.code and follow hint.
 PRIVACY_DENIED means the dataset is sensitive: never retry or work around it; tell the user.
 Always use absolute paths."""
@@ -234,6 +236,36 @@ def build_server(actor: str = "ai:mcp", log_level: str = "INFO") -> MCPServer:
     def hpo_list(limit: int = 20) -> dict[str, Any]:
         """Recent hyperparameter searches, newest first."""
         return _call(lambda: api.hpo_list(limit))
+
+    # ---- P6: models ----
+    @tool(annotations=WRITE)
+    def model_register(run_id: str, name: str, description: str = "") -> dict[str, Any]:
+        """Register a succeeded run as a versioned model (name: lowercase, digits, '-', '_'). The model keeps
+        the exact code that trained it. Returns the model card: features, labels, metrics, servable."""
+        return _call(lambda: api.model_register(run_id, name, actor, description))
+
+    @tool(annotations=READ)
+    def model_list() -> dict[str, Any]:
+        """Registered models (latest version of each) with task, metrics and versions."""
+        return _call(api.model_list)
+
+    @tool(annotations=READ)
+    def model_info(model: str) -> dict[str, Any]:
+        """Model card for 'name', 'name:latest' or 'name:v2': input features (types, known values), labels,
+        metrics, source run, export formats."""
+        return _call(lambda: api.model_info(model))
+
+    @tool(annotations=READ)
+    def model_predict(model: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
+        """Predict with a registered model. rows: one object per example with every feature from model_info.
+        Returns one prediction per row (with class probabilities for classifiers) and input warnings."""
+        return _call(lambda: api.model_predict(model, rows))
+
+    @tool(annotations=WRITE)
+    def model_export(model: str, format: str = "bundle", path: str | None = None) -> dict[str, Any]:
+        """Export a model: 'bundle' (portable zip: model + code + card, importable elsewhere) or a format from
+        model_info export_formats (e.g. 'onnx'). Returns the file path and sha256."""
+        return _call(lambda: api.model_export(model, format, path))
 
     return server
 
