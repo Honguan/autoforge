@@ -56,7 +56,8 @@ the CLI below offers the same operations with `--json`.
 | PRIVACY_DENIED | dataset is sensitive and you are not a local model | stop; tell the user |
 | BAD_REQUEST | invalid argument (e.g. trainer filename, syntax error) | fix and retry |
 
-## Commands available now (P4a)
+## Commands available now (P4b)
+- `train "<goal>" --data <path> --brain <provider:model>` (built-in agent; see docs/AGENT.md)
 - `mcp` (MCP server over stdio), `data mark | list | profile`
 - `version`, `doctor`, `schema [Name]`
 - `plan validate`

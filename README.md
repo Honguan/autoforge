@@ -7,7 +7,7 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> 目前狀態：**P4a MCP Server**，訂閱制 AI 可以直接操作 AutoForge，設定方式見 [docs/MCP.md](docs/MCP.md)。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+> 目前狀態：**P4b 內建 AI 代理**。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 
 ## 安裝
 
@@ -45,6 +45,16 @@ autoforge run retry <run_id>                         # 同計畫重跑，從 che
 每次訓練的所有檔案都在 `~/.autoforge/runs/<run_id>/`：計畫、模型、checkpoint、日誌、指標、稽核紀錄，計畫和 AI 寫的程式會用 git 版本管理。
 
 方法包格式見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)，索引放在本 repo 的 [`packs-index` 分支](https://github.com/Honguan/autoforge/tree/packs-index)。
+
+## 一句話訓練（內建 AI 代理）
+
+```bash
+pip install -e ".[anthropic]"
+autoforge train "預測 churned 欄位" --data examples/data/churn.csv                   # Claude（預設）
+autoforge train "預測 churned 欄位" --data examples/data/churn.csv --brain ollama:qwen3   # 本地模型
+```
+
+詳見 [docs/AGENT.md](docs/AGENT.md)。
 
 ## 讓 AI 操作（MCP）
 
