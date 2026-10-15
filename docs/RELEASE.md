@@ -22,11 +22,23 @@
 
 ## 發佈一個版本
 
+先改 `pyproject.toml` 和 `autoforge/__init__.py` 的版本號，更新 CHANGELOG.md，合併到 main。接著用下面任一種方式建立 tag：
+
+**方法 A：命令列**
+
 ```bash
-# 1. 改 pyproject.toml 和 autoforge/__init__.py 的版本號，更新 CHANGELOG.md，合併到 main
+git checkout main && git pull
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+**方法 B：GitHub 網頁**
+
+1. 到 repo 首頁 → Releases → **Draft a new release**。
+2. Choose a tag 輸入 `v1.0.0`，選「Create new tag on publish」，Target 選 `main`。
+3. 標題填 `AutoForge v1.0.0`，按 **Publish release**。
+
+建立 tag 後就會觸發 `release` workflow，自動把 wheel 和 sdist 附加到這個 Release。
 
 接著到 GitHub 的 Actions 頁面看 `release` 的執行結果。
 
