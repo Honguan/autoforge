@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "autoforge"
-version = "0.1.0"
+version = "0.2.0"
 description = "Let AI analyze, plan, train, evaluate and deploy AI models on your own hardware."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,4 +27,4 @@ autoforge = "autoforge.cli.main:app"
 packages = ["autoforge"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "packs"]

@@ -1,0 +1,9 @@
+name: tabular-classic
+version: 0.1.0
+summary: Classic machine learning for tabular (CSV) data. CPU only, fast, explainable baselines.
+tasks: [tabular-classification, tabular-regression]
+recipes: [logistic_regression, random_forest]
+dependencies: [scikit-learn>=1.3, pandas>=2.0, joblib>=1.3]
+authors: [AutoForge]
+license: MIT
+min_autoforge: 0.2.0

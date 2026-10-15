@@ -1,0 +1,11 @@
+id: logistic_regression
+name: Logistic Regression
+task_types: [tabular-classification]
+entrypoint: trainers/sklearn_trainers.py:train_logistic_regression
+requires: { device: cpu, min_ram_gb: 1 }
+good_for: First baseline for classification; small-to-medium data; needs explainable coefficients.
+avoid_when: Strongly non-linear relationships between features and target.
+defaults: { C: 1.0, max_iter: 1000, class_weight: null }
+search_space:
+  C: { type: float, low: 0.001, high: 100, log: true }
+  class_weight: { choices: [null, balanced] }

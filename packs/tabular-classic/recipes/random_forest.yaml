@@ -1,0 +1,12 @@
+id: random_forest
+name: Random Forest
+task_types: [tabular-classification, tabular-regression]
+entrypoint: trainers/sklearn_trainers.py:train_random_forest
+requires: { device: cpu, min_ram_gb: 2 }
+good_for: Strong default for tabular data; handles non-linearity and mixed feature types with little tuning.
+avoid_when: Very large data (millions of rows) where gradient boosting is faster and more accurate.
+defaults: { n_estimators: 300, max_depth: null, min_samples_leaf: 1, class_weight: null }
+search_space:
+  n_estimators: { type: int, low: 100, high: 1000 }
+  max_depth: { choices: [null, 6, 12, 24] }
+  min_samples_leaf: { type: int, low: 1, high: 20 }

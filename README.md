@@ -7,7 +7,7 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> 目前狀態：**P1 骨架**。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+> 目前狀態：**P2 方法包系統**。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 
 ## 安裝
 
@@ -23,7 +23,17 @@ autoforge doctor               # 偵測硬體
 autoforge doctor --json        # 給 AI 讀的 JSON
 autoforge schema               # 列出所有資料結構
 autoforge schema TrainingPlan --json
+
+# 方法包
+autoforge pack search csv --fit            # 搜尋這台電腦跑得動的方法包
+autoforge pack install tabular-classic    # 從索引安裝（鎖定 commit）
+autoforge pack install ./packs/tabular-classic   # 從本地資料夾安裝
+autoforge pack install github:owner/repo/subdir@v1.0.0
+autoforge pack info tabular-classic --json       # 給 AI 讀的知識和方法
+autoforge pack list
 ```
+
+方法包格式見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)，索引在 [Honguan/autoforge-packs-index](https://github.com/Honguan/autoforge-packs-index)。
 
 ## 測試
 
