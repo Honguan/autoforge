@@ -18,7 +18,9 @@ def test_missing_knowledge(pack_copy):
 
 def test_bad_name_and_version(pack_copy):
     y = pack_copy / "pack.yaml"
-    y.write_text(y.read_text().replace("name: tabular-classic", "name: Tabular_Classic").replace("0.1.0", "v1"))
+    import re
+    text = y.read_text().replace("name: tabular-classic", "name: Tabular_Classic")
+    y.write_text(re.sub(r"(?m)^version: .*$", "version: v1", text))
     _, problems = collect_problems(pack_copy)
     assert any("name" in p for p in problems) and any("version" in p for p in problems)
 

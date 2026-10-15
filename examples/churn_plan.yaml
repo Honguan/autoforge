@@ -1,0 +1,18 @@
+# Hand-written training plan: predict customer churn from a CSV.
+# Run:  autoforge pack install tabular-classic   (or: autoforge pack install ./packs/tabular-classic)
+#       autoforge run start examples/churn_plan.yaml --wait
+task:
+  task_type: tabular-classification
+  input_modality: tabular
+  output_modality: label
+  target: churned
+  metric: f1_macro
+  description: Predict whether a customer will cancel their subscription.
+data_path: data/churn.csv          # relative to this file
+pack: tabular-classic
+recipe: random_forest
+device: auto
+seed: 0
+hyperparameters:
+  n_estimators: 200
+  class_weight: balanced

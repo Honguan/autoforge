@@ -1,0 +1,5 @@
+name: engine-test
+version: 1.0.0
+summary: Fake trainers for engine tests.
+tasks: [toy]
+recipes: [quick, slow, crash, stubborn]

@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
+from autoforge.errors import AutoForgeError
 
-class PackError(Exception):
+
+class PackError(AutoForgeError):
     code = "PACK_ERROR"
-    hint: str | None = None
-
-    def __init__(self, message: str, hint: str | None = None):
-        super().__init__(message)
-        if hint is not None:
-            self.hint = hint
 
 
 class PackInvalid(PackError):
@@ -19,7 +15,7 @@ class PackInvalid(PackError):
 
     def __init__(self, problems: list[str]):
         self.problems = problems
-        super().__init__("; ".join(problems))
+        super().__init__("; ".join(problems), details={"problems": problems})
 
 
 class PackNotFound(PackError):

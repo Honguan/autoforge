@@ -1,0 +1,6 @@
+id: slow
+name: slow
+task_types: [toy]
+entrypoint: trainers/toy.py:slow
+requires: { device: cpu }
+defaults: { steps: 3, lr: 0.1 }

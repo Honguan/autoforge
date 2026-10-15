@@ -1,9 +1,7 @@
 """scikit-learn trainers for the tabular-classic pack.
 
-Trainer contract (provisional, finalized in P3):
-    train(ctx: dict) -> dict
-    ctx keys: data_path (CSV), target, task_type, hyperparameters, output_dir, seed
-    returns:  {"metrics": {...}, "model_path": str}
+Trainer contract v1: train(ctx: TrainContext) -> {"metrics": {...}, "model_path": str}
+See autoforge/engine/context.py. Dict-style ctx (ctx["data_path"]) is also accepted.
 """
 
 from __future__ import annotations
@@ -11,7 +9,17 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def _prepare(ctx: dict):
+def _log(ctx, message: str) -> None:
+    if hasattr(ctx, "log"):
+        ctx.log(message)
+
+
+def _check_stop(ctx) -> None:
+    if hasattr(ctx, "check_stop"):
+        ctx.check_stop()
+
+
+def _prepare(ctx):
     import pandas as pd
     from sklearn.compose import ColumnTransformer
     from sklearn.impute import SimpleImputer
@@ -20,6 +28,7 @@ def _prepare(ctx: dict):
     from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
     df = pd.read_csv(ctx["data_path"])
+    _log(ctx, f"loaded {len(df)} rows, {df.shape[1]} columns")
     y = df.pop(ctx["target"])
     numeric = df.select_dtypes("number").columns.tolist()
     categorical = [c for c in df.columns if c not in numeric]
@@ -37,13 +46,16 @@ def _prepare(ctx: dict):
     return pre, split, is_clf
 
 
-def _fit_and_score(ctx: dict, pre, estimator, split, is_clf: bool) -> dict:
+def _fit_and_score(ctx, pre, estimator, split, is_clf: bool) -> dict:
     import joblib
     from sklearn import metrics
     from sklearn.pipeline import make_pipeline
 
     x_train, x_val, y_train, y_val = split
+    _check_stop(ctx)
+    _log(ctx, f"training {type(estimator).__name__} on {len(x_train)} rows")
     model = make_pipeline(pre, estimator).fit(x_train, y_train)
+    _check_stop(ctx)
     pred = model.predict(x_val)
     if is_clf:
         scores = {
@@ -63,7 +75,7 @@ def _fit_and_score(ctx: dict, pre, estimator, split, is_clf: bool) -> dict:
     return {"metrics": {k: float(v) for k, v in scores.items()}, "model_path": str(model_path)}
 
 
-def train_logistic_regression(ctx: dict) -> dict:
+def train_logistic_regression(ctx) -> dict:
     from sklearn.linear_model import LogisticRegression
 
     hp = {"C": 1.0, "max_iter": 1000, "class_weight": None} | ctx.get("hyperparameters", {})
@@ -73,7 +85,7 @@ def train_logistic_regression(ctx: dict) -> dict:
     return _fit_and_score(ctx, pre, LogisticRegression(**hp), split, is_clf)
 
 
-def train_random_forest(ctx: dict) -> dict:
+def train_random_forest(ctx) -> dict:
     from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
     hp = {"n_estimators": 300, "max_depth": None, "min_samples_leaf": 1} | ctx.get("hyperparameters", {})

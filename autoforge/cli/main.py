@@ -8,7 +8,9 @@ import typer
 from autoforge import __version__
 from autoforge.cli.output import JsonOpt, emit, fail
 from autoforge.cli.packs import index_app, pack_app
+from autoforge.cli.runs import plan_app, run_app
 from autoforge.hardware.detect import detect_hardware
+from autoforge.engine.runner import RunView
 from autoforge.packs.index import IndexEntry, PackIndex
 from autoforge.packs.manifest import PackManifest, RecipeSpec
 from autoforge.schemas.core import SCHEMAS
@@ -16,12 +18,15 @@ from autoforge.schemas.core import SCHEMAS
 app = typer.Typer(help="AutoForge: AI that trains AI.", no_args_is_help=True)
 app.add_typer(pack_app, name="pack")
 app.add_typer(index_app, name="index")
+app.add_typer(plan_app, name="plan")
+app.add_typer(run_app, name="run")
 
 ALL_SCHEMAS = SCHEMAS | {
     "PackManifest": PackManifest,
     "RecipeSpec": RecipeSpec,
     "PackIndex": PackIndex,
     "IndexEntry": IndexEntry,
+    "RunView": RunView,
 }
 
 

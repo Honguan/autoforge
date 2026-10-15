@@ -1,0 +1,6 @@
+id: crash
+name: crash
+task_types: [toy]
+entrypoint: trainers/toy.py:crash
+requires: { device: cpu }
+defaults: { steps: 3, lr: 0.1 }

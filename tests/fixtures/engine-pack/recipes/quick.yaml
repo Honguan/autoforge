@@ -1,0 +1,6 @@
+id: quick
+name: quick
+task_types: [toy]
+entrypoint: trainers/toy.py:quick
+requires: { device: cpu }
+defaults: { steps: 3, lr: 0.1 }

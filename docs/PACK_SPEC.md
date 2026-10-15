@@ -45,13 +45,31 @@
 
 寫法重點：用表格和條列，寫具體數字（例如「minority < 20% 就用 class_weight: balanced」），不要寫空泛的建議。
 
-## 5. 訓練程式介面（暫定，P3 定案）
+## 5. 訓練程式介面 v1
 
 ```python
-def train(ctx: dict) -> dict:
-    # ctx: data_path, target, task_type, hyperparameters, output_dir, seed
-    return {"metrics": {...}, "model_path": "..."}
+def train(ctx) -> dict:
+    ctx.log("開始訓練")                       # 文字紀錄
+    for step in range(...):
+        ctx.check_stop()                      # 有人要求停止時拋出 RunStopped，乾淨結束
+        ctx.log_metric("loss", loss, step=step)
+        save(ctx.checkpoint_dir / f"step{step}.pt")
+    return {"metrics": {"accuracy": 0.93}, "model_path": str(ctx.output_dir / "model.pt")}
 ```
+
+| ctx 屬性/方法 | 說明 |
+|---|---|
+| `data_path`, `target`, `task_type`, `seed` | 來自訓練計畫 |
+| `hyperparameters` | recipe 預設值合併計畫裡的值 |
+| `device` | `cpu` 或 `cuda`（引擎已依硬體和 recipe 決定） |
+| `output_dir`, `checkpoint_dir` | 模型輸出和 checkpoint 資料夾 |
+| `log(msg)`, `log_metric(name, value, step)` | 即時紀錄，`run metrics` 和 `run start --wait` 會顯示 |
+| `check_stop()` / `should_stop()` | 配合停止要求 |
+| `latest_checkpoint()` | 用 `run retry` 重跑時，回傳上一次最新的 checkpoint |
+
+- 暫停（pause）不需要訓練程式配合，引擎會直接凍結整個行程。
+- 不呼叫 `check_stop()` 的訓練程式也能停止，只是會在寬限時間過後被強制終止。
+- 舊的 dict 寫法（`ctx["data_path"]`）仍然可用。
 
 ## 6. 驗證規則（`autoforge pack validate`）
 

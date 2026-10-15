@@ -7,7 +7,7 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> 目前狀態：**P2 方法包系統**。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+> 目前狀態：**P3 執行引擎**。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
 
 ## 安裝
 
@@ -31,7 +31,18 @@ autoforge pack install ./packs/tabular-classic   # 從本地資料夾安裝
 autoforge pack install github:owner/repo/subdir@v1.0.0
 autoforge pack info tabular-classic --json       # 給 AI 讀的知識和方法
 autoforge pack list
+
+# 訓練
+autoforge plan validate examples/churn_plan.yaml     # 檢查訓練計畫
+autoforge run start examples/churn_plan.yaml --wait  # 訓練並即時顯示進度
+autoforge run start plan.yaml --json                 # 背景訓練，立即回傳 run_id（給 AI 用）
+autoforge run status <run_id>
+autoforge run pause|resume|stop <run_id>
+autoforge run metrics|logs|audit <run_id>
+autoforge run retry <run_id>                         # 同計畫重跑，從 checkpoint 接續
 ```
+
+每次訓練的所有檔案都在 `~/.autoforge/runs/<run_id>/`：計畫、模型、checkpoint、日誌、指標、稽核紀錄，計畫和 AI 寫的程式會用 git 版本管理。
 
 方法包格式見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)，索引放在本 repo 的 [`packs-index` 分支](https://github.com/Honguan/autoforge/tree/packs-index)。
 

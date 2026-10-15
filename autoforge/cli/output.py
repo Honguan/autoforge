@@ -8,7 +8,7 @@ from typing import Any, Iterator
 
 import typer
 
-from autoforge.packs.errors import PackError, PackInvalid
+from autoforge.errors import AutoForgeError
 from autoforge.schemas.core import Envelope, ErrorInfo
 
 JsonOpt = typer.Option(False, "--json", help="Machine-readable JSON output.")
@@ -33,10 +33,8 @@ def fail(as_json: bool, code: str, message: str, hint: str | None = None, detail
 
 @contextmanager
 def errors_as_envelope(as_json: bool) -> Iterator[None]:
-    """Turn PackError (and subclasses) into a JSON error envelope with its code."""
+    """Turn any AutoForgeError into an error envelope carrying its code and details."""
     try:
         yield
-    except PackInvalid as e:
-        fail(as_json, e.code, "pack is invalid", e.hint, {"problems": e.problems})
-    except PackError as e:
-        fail(as_json, e.code, str(e), e.hint)
+    except AutoForgeError as e:
+        fail(as_json, e.code, str(e), e.hint, e.details)

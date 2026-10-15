@@ -7,7 +7,7 @@ so any AI client can read the exact contract.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -88,10 +88,14 @@ class TaskSpec(BaseModel):
 
 class TrainingPlan(BaseModel):
     task: TaskSpec
-    pack: str | None = Field(default=None, description="pack name; None when using custom code")
+    data_path: str = Field(description="training data file or directory")
+    pack: str | None = Field(default=None, description="installed pack name; None when using custom code")
     recipe: str | None = None
-    custom_code_path: str | None = Field(default=None, description="AI-written trainer, if any")
-    device: str = "auto"
+    custom_code_path: str | None = Field(
+        default=None, description="AI-written trainer 'file.py[:function]' (function defaults to 'train')"
+    )
+    device: Literal["auto", "cpu", "cuda"] = "auto"
+    seed: int = 0
     hyperparameters: dict[str, Any] = Field(default_factory=dict)
     estimated_minutes: float | None = None
     estimated_vram_gb: float | None = None
