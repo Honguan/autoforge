@@ -81,3 +81,32 @@ def test_missing_github_repo_has_clear_error(monkeypatch, tmp_path):
     with pytest.raises(PackSourceError) as e:
         installer.install("github:nobody/nothing@main")
     assert "not found" in str(e.value) and "pack search" in e.value.hint
+
+
+def test_install_from_github_without_git(monkeypatch, tmp_path):
+    """No git on the machine: download the commit tarball over HTTPS (mocked here)."""
+    import io
+    import tarfile
+
+    from conftest import EXAMPLE_PACK
+
+    sha = "c" * 40
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        tar.add(EXAMPLE_PACK, arcname=f"repo-{sha}/packs/tabular-classic")
+    calls = []
+
+    def fake_get(url, accept=None):
+        calls.append(url)
+        if url.endswith("/commits/main"):
+            return sha.encode()
+        if url.endswith(f"/tar.gz/{sha}"):
+            return buf.getvalue()
+        raise AssertionError(url)
+
+    monkeypatch.setattr(installer.shutil, "which", lambda name: None)
+    monkeypatch.setattr(installer, "_http_get", fake_get)
+    rec = installer.install("github:me/repo/packs/tabular-classic@main")
+    assert rec.commit_sha == sha and rec.name == "tabular-classic"
+    assert calls == ["https://api.github.com/repos/me/repo/commits/main",
+                     f"https://codeload.github.com/me/repo/tar.gz/{sha}"]

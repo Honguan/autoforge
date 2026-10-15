@@ -78,7 +78,9 @@ def test_pack(path: str | Path, timeout: float = 600) -> dict:
     seconds = round(time.monotonic() - start, 1)
     summary = next((line for line in reversed(out.strip().splitlines()) if re.search(r"passed|failed|error|skipped", line)), "")
     counts = {k: int(n) for n, k in re.findall(r"(\d+) (passed|failed|skipped|error)", summary)}
-    return {"path": str(root), "ok": code == 0, "timed_out": code == -1, "seconds": seconds,
+    # pytest exits 5 when every test was skipped (e.g. torch not installed): skipped, not failed.
+    ok = code == 0 or (code == 5 and counts.get("skipped", 0) > 0)
+    return {"path": str(root), "ok": ok, "timed_out": code == -1, "seconds": seconds,
             "passed": counts.get("passed", 0), "failed": counts.get("failed", 0) + counts.get("error", 0),
             "skipped": counts.get("skipped", 0), "summary": summary, "output_tail": out.strip().splitlines()[-40:]}
 

@@ -1,0 +1,11 @@
+# AutoForge — NVIDIA CUDA image (all packs incl. transformers, LLM LoRA/QLoRA, timm).
+#   docker run --rm --gpus all -p 127.0.0.1:8800:8800 -v autoforge:/data ghcr.io/honguan/autoforge:cuda
+FROM pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 AUTOFORGE_HOME=/data
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+COPY dist/*.whl /tmp/
+RUN pip install "$(ls /tmp/*.whl)[deep,onnx,anthropic]" bitsandbytes && rm /tmp/*.whl
+VOLUME /data
+EXPOSE 8800 8000
+ENTRYPOINT ["autoforge"]
+CMD ["gui", "--host", "0.0.0.0", "--no-open"]

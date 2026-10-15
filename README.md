@@ -7,7 +7,27 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> 目前狀態：**P8 網頁介面**：`autoforge gui` 不用打指令就能訓練（[docs/GUI.md](docs/GUI.md)）。另有 6 個方法包（見下表）。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+> **1.0.0** · 文件網站：<https://honguan.github.io/autoforge/> · [變更紀錄](CHANGELOG.md)
+
+## 安裝與第一次使用
+
+```bash
+pip install autoforge-ai          # 需要 Python 3.11 以上
+autoforge quickstart              # 約 1 分鐘：檢查硬體 → 安裝方法包 → 訓練 → 註冊 → 預測
+autoforge gui                     # 網頁介面
+```
+
+| 安裝方式 | 包含 |
+|---|---|
+| `pip install autoforge-ai` | 表格、文字（TF-IDF）、時間序列、異常偵測、自動調參、網頁介面、MCP、REST |
+| `pip install "autoforge-ai[deep]"` | 再加上 Transformer、LLM 微調（LoRA/QLoRA）、圖片分類（NVIDIA GPU） |
+| `pip install "autoforge-ai[all]"` | 再加上 Claude 代理、ONNX 匯出 |
+| `docker run --rm -p 127.0.0.1:8800:8800 -v autoforge:/data ghcr.io/honguan/autoforge:cpu` | CPU 映像，預設啟動網頁介面 |
+| `docker run --rm --gpus all -p 127.0.0.1:8800:8800 -v autoforge:/data ghcr.io/honguan/autoforge:cuda` | NVIDIA CUDA 映像，所有方法包 |
+
+PyPI 上的 `autoforge` 是另一個不相關的專案，請安裝 **`autoforge-ai`**；裝好之後指令一樣是 `autoforge`。
+
+操作方式：[網頁介面](docs/GUI.md) · [一句話訓練](docs/AGENT.md) · [讓訂閱制 AI 透過 MCP 操作](docs/MCP.md) · [改進模型](docs/IMPROVE.md) · [部署](docs/DEPLOY.md) · [架構](docs/ARCHITECTURE.md) · [路線圖](docs/ROADMAP.md)
 
 ## 內建方法包
 
@@ -22,11 +42,12 @@
 
 每個方法包都附給 AI 讀的 `KNOWLEDGE.md`，以及在 CPU 上 30 秒內跑完的測試。自己做方法包：`autoforge pack new`（見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)）。
 
-## 安裝
+## 從原始碼開發
 
 ```bash
-pip install -e ".[dev]"        # CPU
-pip install -e ".[dev,gpu]"    # NVIDIA GPU
+git clone https://github.com/Honguan/autoforge && cd autoforge
+pip install -e ".[dev]"            # 加上 ,deep 安裝深度學習方法包的依賴
+pytest -q
 ```
 
 ## 網頁介面

@@ -3,12 +3,31 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "autoforge"
-version = "0.9.0"
-description = "Let AI analyze, plan, train, evaluate and deploy AI models on your own hardware."
+name = "autoforge-ai"
+version = "1.0.0"
+description = "AI that trains AI: analyse your data and hardware, pick a method, train, tune and deploy models on your own machine — from a CLI, MCP, a web GUI or one sentence."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Honguan" }]
+keywords = ["automl", "mcp", "llm", "fine-tuning", "lora", "machine-learning", "ai-agent", "training"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Environment :: GPU :: NVIDIA CUDA",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: Chinese (Traditional)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "pydantic>=2.6",
     "typer>=0.12",
@@ -18,20 +37,40 @@ dependencies = [
     "httpx2>=2.0",
     "starlette>=0.40",
     "uvicorn>=0.30",
+    "python-multipart>=0.0.9",
+    # Classic ML and hyperparameter search work out of the box (quickstart, tabular, text, time series, anomaly):
+    "scikit-learn>=1.4",
+    "pandas>=2.0",
+    "joblib>=1.3",
+    "optuna>=5.0,<6",
 ]
 
 [project.optional-dependencies]
+# Deep learning packs (text transformers, LLM LoRA/QLoRA, images). On Linux/Windows pip installs the CUDA build of torch.
+deep = ["torch>=2.3", "torchvision>=0.18", "transformers>=4.45", "peft>=0.12", "accelerate>=0.30", "timm>=1.0",
+        "pillow>=10.0", "nvidia-ml-py>=12.0"]
 gpu = ["torch>=2.3", "nvidia-ml-py>=12.0"]
 anthropic = ["anthropic>=1.14,<2"]
-hpo = ["optuna>=5.0,<6"]
-onnx = ["skl2onnx>=1.17", "onnxruntime>=1.18"]
-dev = ["pytest>=8.0", "optuna>=5.0,<6"]
+onnx = ["skl2onnx>=1.17", "onnxruntime>=1.18", "onnx>=1.16", "onnxscript>=0.1"]
+all = ["autoforge-ai[deep,anthropic,onnx]"]
+hpo = []  # kept for compatibility: optuna is now a core dependency
+dev = ["pytest>=8.0", "playwright>=1.45", "build>=1.2", "twine>=5.0"]
+
+[project.urls]
+Homepage = "https://github.com/Honguan/autoforge"
+Documentation = "https://honguan.github.io/autoforge/"
+Source = "https://github.com/Honguan/autoforge"
+Issues = "https://github.com/Honguan/autoforge/issues"
+Changelog = "https://github.com/Honguan/autoforge/blob/main/CHANGELOG.md"
 
 [project.scripts]
 autoforge = "autoforge.cli.main:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["autoforge"]
+
+[tool.hatch.build.targets.sdist]
+include = ["autoforge", "tests", "packs", "examples", "docs", "README.md", "LICENSE", "CHANGELOG.md", "AGENTS.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

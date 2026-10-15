@@ -77,7 +77,7 @@ the CLI below offers the same operations with `--json`.
 | PRIVACY_DENIED | dataset is sensitive and you are not a local model | stop; tell the user |
 | BAD_REQUEST | invalid argument (e.g. trainer filename, syntax error) | fix and retry |
 | STUDY_NOT_FOUND | unknown study_id | `hpo list` |
-| HPO_UNAVAILABLE | optuna not installed | tell the user: pip install "autoforge[hpo]" |
+| HPO_UNAVAILABLE | optuna not installed | tell the user: pip install optuna |
 | MODEL_NOT_FOUND | unknown model or version | `model list` |
 | MODEL_NOT_SERVABLE | recipe has no predictor | train with a recipe that has one |
 | INVALID_INPUT | rows missing features / wrong types; `data.features` lists them | fix the rows |
@@ -85,7 +85,8 @@ the CLI below offers the same operations with `--json`.
 | PACK_AUTHORING_ERROR | bad name, unsafe path, pack exists | fix and retry (overwrite=true to replace) |
 | PACK_TEST_FAILED | pack smoke tests failed; `data.output_tail` | fix the pack |
 
-## Commands available now (P8)
+## Commands available now (1.0)
+- `quickstart` (end-to-end demo on bundled data)
 - `gui` (local web interface for humans; actor "human")
 - `pack new | test`
 - `model register | list | info | predict | export | import | remove`, `serve`, `serve-mcp`

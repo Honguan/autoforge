@@ -1,0 +1,39 @@
+site_name: AutoForge
+site_description: 讓 AI 自己分析、訓練、調參、部署 AI 模型
+site_url: https://honguan.github.io/autoforge/
+repo_url: https://github.com/Honguan/autoforge
+repo_name: Honguan/autoforge
+edit_uri: edit/main/docs/
+docs_dir: docs
+theme:
+  name: material
+  language: zh-TW
+  features: [navigation.sections, navigation.top, content.code.copy, search.highlight]
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: { icon: material/weather-night, name: 深色模式 }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: { icon: material/weather-sunny, name: 淺色模式 }
+plugins:
+  - search:
+      lang: [zh, en]
+markdown_extensions:
+  - admonition
+  - tables
+  - toc: { permalink: true }
+  - pymdownx.superfences
+nav:
+  - 首頁: index.md
+  - 使用:
+      - 網頁介面: GUI.md
+      - 一句話訓練（AI 代理）: AGENT.md
+      - 讓訂閱制 AI 操作（MCP）: MCP.md
+      - 改進模型: IMPROVE.md
+      - 部署模型: DEPLOY.md
+  - 開發:
+      - 方法包格式: PACK_SPEC.md
+      - 架構設計: ARCHITECTURE.md
+      - 開發路線圖: ROADMAP.md
+      - 發佈流程: RELEASE.md

@@ -12,6 +12,7 @@ from autoforge.cli.agent import train
 from autoforge.cli.data import data_app
 from autoforge.cli.hpo import hpo_app
 from autoforge.cli.models import gui, model_app, serve, serve_mcp
+from autoforge.cli.quickstart import quickstart
 from autoforge.cli.runs import plan_app, run_app
 from autoforge.hardware.detect import detect_hardware
 from autoforge.engine.runner import RunView
@@ -32,6 +33,7 @@ app.command()(serve)
 app.command("serve-mcp")(serve_mcp)
 app.command()(train)
 app.command()(gui)
+app.command()(quickstart)
 
 ALL_SCHEMAS = SCHEMAS | {
     "PackManifest": PackManifest,

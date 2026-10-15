@@ -148,6 +148,8 @@ def serve_mcp(
 
 def gui(
     port: int = typer.Option(8800, "--port", "-p"),
+    host: str = typer.Option("127.0.0.1", "--host",
+                             help="Bind address. Use 0.0.0.0 only inside Docker with -p 127.0.0.1:8800:8800."),
     open_browser: bool = typer.Option(True, "--open/--no-open", help="Open the browser automatically."),
 ) -> None:
     """Open the web interface (local only: 127.0.0.1, protected by a one-time token)."""
@@ -162,6 +164,9 @@ def gui(
     token = secrets.token_urlsafe(24)
     url = f"http://127.0.0.1:{port}/"
     typer.echo(f"AutoForge GUI: {url}  (Ctrl+C to stop)")
+    if host not in ("127.0.0.1", "localhost"):
+        typer.echo(typer.style(f"warning: binding {host}; the GUI still only answers requests addressed to "
+                               "localhost/127.0.0.1, so publish the port only on 127.0.0.1", fg="yellow"), err=True)
     if open_browser:
         threading.Timer(1.0, lambda: webbrowser.open(url)).start()
-    uvicorn.run(create_app(token), host="127.0.0.1", port=port, log_level="warning")
+    uvicorn.run(create_app(token), host=host, port=port, log_level="warning")

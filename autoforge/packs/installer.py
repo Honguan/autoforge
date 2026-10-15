@@ -105,12 +105,56 @@ def _git(*args: str, cwd: Path) -> str:
 
 
 def _fetch_github(src: GithubSource, workdir: Path) -> tuple[Path, str]:
-    """Shallow-fetch one ref (works for tags, branches and commit SHAs). Returns (pack dir, sha)."""
-    _git("init", "-q", cwd=workdir)
-    _git("fetch", "-q", "--depth", "1", src.url, src.ref, cwd=workdir)
-    _git("checkout", "-q", "FETCH_HEAD", cwd=workdir)
-    sha = _git("rev-parse", "HEAD", cwd=workdir)
-    return workdir / src.subdir, sha
+    """Fetch one ref (tag, branch or commit SHA). Returns (pack dir, sha).
+    Uses git when installed (also works for private repos with git credentials); otherwise downloads
+    the commit's tarball over HTTPS, so a bare `pip install` works without git."""
+    if shutil.which("git"):
+        _git("init", "-q", cwd=workdir)
+        _git("fetch", "-q", "--depth", "1", src.url, src.ref, cwd=workdir)
+        _git("checkout", "-q", "FETCH_HEAD", cwd=workdir)
+        sha = _git("rev-parse", "HEAD", cwd=workdir)
+        return workdir / src.subdir, sha
+    return _fetch_github_http(src, workdir)
+
+
+def _http_get(url: str, accept: str | None = None) -> bytes:
+    import urllib.error
+    import urllib.request
+
+    req = urllib.request.Request(url, headers={"User-Agent": "autoforge", **({"Accept": accept} if accept else {})})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            return resp.read()
+    except urllib.error.HTTPError as e:
+        if e.code in (404, 422):
+            raise PackSourceError("repository or ref not found (or private)",
+                                  hint="Check the owner/repo/ref. Private repos need git installed.")
+        raise PackSourceError(f"GitHub returned {e.code} for {url}")
+    except OSError as e:
+        raise PackSourceError(f"cannot reach GitHub: {e}", hint="Check the network, or install git.")
+
+
+def _fetch_github_http(src: GithubSource, workdir: Path) -> tuple[Path, str]:
+    import io
+    import tarfile
+
+    api = f"https://api.github.com/repos/{src.owner}/{src.repo}"
+    if re.fullmatch(r"[0-9a-f]{40}", src.ref):
+        sha = src.ref
+    else:
+        ref = src.ref
+        if ref == "HEAD":
+            ref = json.loads(_http_get(api))["default_branch"]
+        sha = _http_get(f"{api}/commits/{ref}", accept="application/vnd.github.sha").decode().strip()
+        if not re.fullmatch(r"[0-9a-f]{40}", sha):
+            raise PackSourceError(f"could not resolve '{src.ref}' to a commit")
+    data = _http_get(f"https://codeload.github.com/{src.owner}/{src.repo}/tar.gz/{sha}")
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+        tar.extractall(workdir, filter="data")  # rejects absolute paths, '..', devices and unsafe links
+    tops = [p for p in workdir.iterdir() if p.is_dir()]
+    if len(tops) != 1:
+        raise PackSourceError("unexpected archive layout from GitHub")
+    return tops[0] / src.subdir, sha
 
 
 # ---------- install / remove ----------

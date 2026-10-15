@@ -47,7 +47,7 @@ class StudyNotFound(AutoForgeError):
 
 class HPOUnavailable(AutoForgeError):
     code = "HPO_UNAVAILABLE"
-    hint = 'pip install "autoforge[hpo]"  (installs optuna)'
+    hint = "pip install optuna"
 
 
 class StudyConfig(BaseModel):
