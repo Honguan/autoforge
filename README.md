@@ -1,6 +1,6 @@
 # AutoForge 方法包索引
 
-[AutoForge](https://github.com/Honguan/autoforge) 的中央方法包索引。AI 只要讀一個 `index.json`，就能找到適合任務和硬體的方法包，不必爬整個 GitHub。
+[AutoForge](https://github.com/Honguan/autoforge) 的中央方法包索引，放在 `packs-index` 分支（和程式碼分開的獨立歷史）。AI 只要讀一個 `index.json`，就能找到適合任務和硬體的方法包，不必爬整個 GitHub。
 
 ## 使用
 
@@ -10,7 +10,7 @@ autoforge pack install tabular-classic      # 安裝索引中鎖定的 commit
 ```
 
 AutoForge 預設讀取：
-`https://raw.githubusercontent.com/Honguan/autoforge-packs-index/main/index.json`
+`https://raw.githubusercontent.com/Honguan/autoforge/packs-index/index.json`
 可用環境變數 `AUTOFORGE_INDEX_URL` 改成其他網址或本地檔案。
 
 ## 目前收錄
@@ -30,7 +30,7 @@ AutoForge 預設讀取：
      --commit <sha> --tag <關鍵字>
    autoforge index validate index.json
    ```
-4. 發 PR。CI 會自動驗證 `index.json`。
+4. 發 PR 到 `packs-index` 分支。CI 會自動驗證 `index.json`。
 
 ## 安全
 

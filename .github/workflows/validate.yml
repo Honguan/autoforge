@@ -1,7 +1,9 @@
 name: validate-index
 on:
   push:
+    branches: [packs-index]
   pull_request:
+    branches: [packs-index]
 jobs:
   validate:
     runs-on: ubuntu-latest
