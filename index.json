@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "packs": [
+    {
+      "name": "tabular-classic",
+      "version": "0.1.0",
+      "summary": "Classic machine learning for tabular (CSV) data. CPU only, fast, explainable baselines.",
+      "source": "github:Honguan/autoforge/packs/tabular-classic",
+      "commit_sha": "5c7fa5e5f1879821d0890cffd0d688359fab3d1d",
+      "tasks": [
+        "tabular-classification",
+        "tabular-regression"
+      ],
+      "tags": [
+        "csv",
+        "sklearn",
+        "baseline",
+        "cpu"
+      ],
+      "recipes": [
+        {
+          "id": "logistic_regression",
+          "task_types": [
+            "tabular-classification"
+          ],
+          "device": "cpu",
+          "min_vram_gb": 0.0,
+          "good_for": "First baseline for classification; small-to-medium data; needs explainable coefficients."
+        },
+        {
+          "id": "random_forest",
+          "task_types": [
+            "tabular-classification",
+            "tabular-regression"
+          ],
+          "device": "cpu",
+          "min_vram_gb": 0.0,
+          "good_for": "Strong default for tabular data; handles non-linearity and mixed feature types with little tuning."
+        }
+      ]
+    }
+  ]
+}
