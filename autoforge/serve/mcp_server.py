@@ -237,6 +237,21 @@ def build_server(actor: str = "ai:mcp", log_level: str = "INFO") -> MCPServer:
         """Recent hyperparameter searches, newest first."""
         return _call(lambda: api.hpo_list(limit))
 
+    # ---- P7: pack authoring ----
+    @tool(annotations=WRITE)
+    def pack_create(name: str, files: dict[str, str], overwrite: bool = False) -> dict[str, Any]:
+        """Write a new method pack into the AutoForge workspace from {relative_path: file_text} and validate it
+        (nothing is executed). Use this to turn a GitHub training repo or your own method into a pack: needs
+        pack.yaml, KNOWLEDGE.md, recipes/<id>.yaml, trainer code and tests/ (format: docs/PACK_SPEC.md,
+        schemas PackManifest / RecipeSpec). Then pack_test(path) and pack_install(path)."""
+        return _call(lambda: api.pack_create(name, files, overwrite))
+
+    @tool(annotations=WRITE)
+    def pack_test(target: str) -> dict[str, Any]:
+        """Run a pack's smoke tests (tests/ with pytest) — an installed pack name or a pack directory path.
+        Returns passed/failed counts and the output tail. This executes the pack's code."""
+        return _call(lambda: api.pack_test(target))
+
     # ---- P6: models ----
     @tool(annotations=WRITE)
     def model_register(run_id: str, name: str, description: str = "") -> dict[str, Any]:

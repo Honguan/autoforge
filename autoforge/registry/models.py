@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 import re
 import shutil
 import sys
@@ -55,7 +56,9 @@ class InvalidInput(ModelError):
 
 class Feature(BaseModel):
     name: str
-    dtype: Literal["numeric", "categorical"]
+    dtype: Literal["numeric", "categorical", "text", "image", "any"]
+    description: str = ""
+    required: bool = True
     known_values: list[str] | None = Field(default=None, description="seen in training (low-cardinality columns only)")
 
 
@@ -176,8 +179,17 @@ def register(run_id: str, name: str, actor: str = "human", description: str = ""
             exporters[fmt] = f"{Path('code') / Path(file).relative_to(code_src)}:{func}"
 
     sens = sensitivity_of(rec.plan.data_path)
-    feats, labels = _features(rec.plan.data_path, rec.plan.task.target, sens,
-                              "classification" in rec.plan.task.task_type)
+    io_file = out_dir / "io.json"
+    if io_file.is_file():  # the trainer described its own inputs (text, images, prompts, history...)
+        io = json.loads(io_file.read_text(encoding="utf-8"))
+        feats = [Feature.model_validate(f) for f in io.get("features", [])]
+        labels = [str(x) for x in io["labels"]] if io.get("labels") else None
+        if sens is Sensitivity.sensitive:
+            feats = [f.model_copy(update={"known_values": None}) for f in feats]
+            labels = None
+    else:
+        feats, labels = _features(rec.plan.data_path, rec.plan.task.target, sens,
+                                  "classification" in rec.plan.task.task_type)
     card = ModelCard(
         name=name, version=version, created_at=now_iso(), actor=actor, description=description,
         run_id=run_id, task=rec.plan.task, pack=rec.plan.pack, pack_version=rec.pack_version,
@@ -243,7 +255,7 @@ def validate_rows(card: ModelCard, rows: Any) -> list[str]:
     names = {f.name for f in card.features}
     problems, warnings = [], []
     for i, row in enumerate(rows):
-        missing = [f.name for f in card.features if f.name not in row]
+        missing = [f.name for f in card.features if f.required and f.name not in row]
         if missing:
             problems.append(f"row {i}: missing {missing}")
         for f in card.features:
@@ -255,6 +267,8 @@ def validate_rows(card: ModelCard, rows: Any) -> list[str]:
                     problems.append(f"row {i}: '{f.name}' must be a number, got {v!r}")
             if f.dtype == "categorical" and f.known_values and v is not None and str(v) not in f.known_values:
                 warnings.append(f"row {i}: '{f.name}'={v!r} was not seen in training")
+            if f.dtype in ("text", "image") and v is not None and not isinstance(v, str):
+                problems.append(f"row {i}: '{f.name}' must be a string")
         extra = sorted(set(row) - names)
         if extra:
             warnings.append(f"row {i}: ignored unknown fields {extra}")
@@ -304,6 +318,10 @@ def export(ref: str, fmt: str, out: Path) -> dict:
         except ImportError as e:
             raise ModelError(f"export to {fmt} needs an extra package: {e}",
                              hint="pip install skl2onnx" if fmt == "onnx" else None)
+        if out.is_dir():  # e.g. merged LLM weights: ship one archive
+            archive = Path(shutil.make_archive(str(out), "zip", out))
+            shutil.rmtree(out)
+            out = archive
     else:
         raise ModelError(f"model {card.ref} cannot be exported as '{fmt}'",
                          hint=f"available: {['bundle', *card.exporters]}")

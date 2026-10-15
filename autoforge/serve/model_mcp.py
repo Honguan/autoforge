@@ -29,12 +29,16 @@ def tool_name(model_name: str) -> str:
 
 def _row_model(card: reg.ModelCard):
     fields: dict[str, Any] = {}
+    kinds = {"numeric": (float, "number"), "categorical": (str, "category."), "text": (str, "text."),
+             "image": (str, "image file path or base64 data."), "any": (Any, "")}
     for f in card.features:
-        if f.dtype == "numeric":
-            fields[f.name] = (float, Field(description="number"))
+        typ, desc = kinds[f.dtype]
+        known = f" Known values: {', '.join(f.known_values)}." if f.known_values else ""
+        description = " ".join(x for x in (f.description, desc + known) if x).strip()
+        if f.required:
+            fields[f.name] = (typ, Field(description=description))
         else:
-            known = f" Known values: {', '.join(f.known_values)}." if f.known_values else ""
-            fields[f.name] = (str, Field(description="category." + known))
+            fields[f.name] = (typ | None, Field(default=None, description=description))
     return create_model(f"{tool_name(card.name)}_row", **fields)
 
 

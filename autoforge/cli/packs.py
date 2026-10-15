@@ -147,3 +147,39 @@ def index_validate(index_file: Path, as_json: bool = JsonOpt) -> None:
     with errors_as_envelope(as_json):
         index = parse_index(index_file.read_text(encoding="utf-8"))
     emit(as_json, {"packs": len(index.packs)}, f"OK: {len(index.packs)} pack(s)")
+
+
+@pack_app.command("new")
+def new(
+    name: str,
+    task: str = typer.Option(..., "--task", help="Task type, e.g. text-classification."),
+    dest: Path = typer.Option(Path("."), "--dest", help="Parent directory."),
+    as_json: bool = JsonOpt,
+) -> None:
+    """Create a valid pack skeleton (pack.yaml, KNOWLEDGE.md, recipe, trainer, smoke test)."""
+    from autoforge.packs.authoring import scaffold
+
+    with errors_as_envelope(as_json):
+        res = scaffold(name, task, dest)
+    emit(as_json, res, f"Created {res['path']}\nNext: edit trainers/train.py and KNOWLEDGE.md, then "
+                       f"`autoforge pack test {res['path']}`")
+
+
+@pack_app.command("test")
+def test(
+    target: str = typer.Argument(help="Installed pack name or a pack directory."),
+    timeout: float = typer.Option(600, "--timeout"),
+    as_json: bool = JsonOpt,
+) -> None:
+    """Run a pack's smoke tests (tests/) with pytest."""
+    from autoforge.packs.authoring import test_pack
+
+    path = target
+    if not Path(target).is_dir():
+        with errors_as_envelope(as_json):
+            path = installer.get_installed(target)[0].path
+    with errors_as_envelope(as_json):
+        res = test_pack(path, timeout)
+    if not res["ok"]:
+        fail(as_json, "PACK_TEST_FAILED", res["summary"] or "tests failed", "read output_tail", res)
+    emit(as_json, res, f"OK: {res['summary']} ({res['seconds']} s)")

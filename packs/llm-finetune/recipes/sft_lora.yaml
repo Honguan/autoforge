@@ -1,0 +1,16 @@
+id: sft_lora
+name: Supervised fine-tuning with LoRA / QLoRA
+task_types: [llm-sft]
+entrypoint: trainers/sft.py:train
+predictor: trainers/sft.py
+exporters:
+  merged: trainers/sft.py:export_merged
+requires: { device: cuda, min_vram_gb: 8, min_ram_gb: 16 }
+good_for: Teach a 0.5B–8B open model a style, format or domain from 200+ prompt/response pairs; QLoRA fits 7–8B in 8–12 GB VRAM.
+avoid_when: The task is classification (use text-classification) or the knowledge changes often (use retrieval instead).
+defaults: { model_name: Qwen/Qwen2.5-0.5B-Instruct, load_in_4bit: false, lora_r: 16, lora_alpha: 32, lora_dropout: 0.05,
+            learning_rate: 0.0002, epochs: 2, batch_size: 4, grad_accum: 4, max_length: 1024, eval_fraction: 0.1 }
+search_space:
+  learning_rate: { type: float, low: 0.00002, high: 0.0005, log: true }
+  lora_r: { choices: [8, 16, 32, 64] }
+  epochs: { type: int, low: 1, high: 4 }

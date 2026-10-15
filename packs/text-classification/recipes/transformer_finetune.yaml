@@ -1,0 +1,14 @@
+id: transformer_finetune
+name: Fine-tune a pretrained transformer
+task_types: [text-classification]
+entrypoint: trainers/transformer.py:train
+predictor: trainers/transformer.py
+requires: { device: cuda, min_vram_gb: 4, min_ram_gb: 8 }
+good_for: Best accuracy when context matters; 1k+ labelled examples; any language with a multilingual model.
+avoid_when: No GPU, under ~300 examples, or the TF-IDF baseline is already near the needed score.
+defaults: { text_column: text, model_name: distilbert-base-multilingual-cased, epochs: 3, learning_rate: 0.00003,
+            batch_size: 16, max_length: 128, weight_decay: 0.01, warmup_ratio: 0.1 }
+search_space:
+  learning_rate: { type: float, low: 0.00001, high: 0.0001, log: true }
+  epochs: { type: int, low: 2, high: 5 }
+  batch_size: { choices: [8, 16, 32] }

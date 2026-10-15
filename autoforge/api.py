@@ -274,3 +274,19 @@ def model_export(ref: str, fmt: str, out: str | None = None) -> dict:
     suffix = {"bundle": "zip"}.get(fmt, fmt)
     path = Path(out) if out else config.home() / "exports" / f"{card.name}-v{card.version}.{suffix}"
     return reg.export(ref, fmt, path)
+
+
+# ---------- P7: pack authoring ----------
+
+
+def pack_create(name: str, files: dict[str, str], overwrite: bool = False) -> dict:
+    from autoforge.packs.authoring import create_from_files
+
+    return create_from_files(name, files, overwrite)
+
+
+def pack_test(target: str) -> dict:
+    from autoforge.packs.authoring import test_pack
+
+    path = target if Path(target).is_dir() else installer.get_installed(target)[0].path
+    return test_pack(path)

@@ -74,6 +74,18 @@ def train(ctx) -> dict:
 - 不呼叫 `check_stop()` 的訓練程式也能停止，只是會在寬限時間過後被強制終止。
 - 舊的 dict 寫法（`ctx["data_path"]`）仍然可用。
 
+### 5.1 描述模型的輸入：`io.json`
+
+訓練程式可以在 `ctx.output_dir` 寫一個 `io.json`，告訴模型倉庫和 MCP 這個模型要什麼輸入。沒有這個檔案時，會用 CSV 欄位（扣掉 target）自動推斷。
+
+```json
+{"features": [{"name": "text", "dtype": "text", "description": "要分類的文字"},
+              {"name": "max_new_tokens", "dtype": "numeric", "required": false}],
+ "labels": ["neg", "pos"]}
+```
+
+`dtype` 可以是：`numeric`、`categorical`、`text`、`image`（路徑或 base64）、`any`。
+
 ## 6. 驗證規則（`autoforge pack validate`）
 
 驗證時不會 import 或執行包裡的程式碼，entrypoint 是用 `ast` 解析原始碼確認函式存在。檢查項目：
@@ -84,7 +96,16 @@ def train(ctx) -> dict:
 - entrypoint 檔案和函式都存在，而且沒有指到包外
 - `device: cpu` 的方法不能要求 VRAM
 
-## 7. 發佈到索引
+## 7. 建立與測試
+
+```bash
+autoforge pack new my-pack --task my-task --dest packs/     # 產生可通過驗證的骨架
+autoforge pack test packs/my-pack                           # 在獨立行程跑 tests/（需在 CPU 30 秒內）
+```
+
+AI 可以用 MCP 的 `pack_create(name, files)` 直接寫出整個方法包，例如把一個 GitHub 訓練專案轉成方法包。檔案會寫到工作區並自動驗證，路徑不能超出方法包資料夾，驗證時也不會執行任何程式碼。接著用 `pack_test` 跑測試，再用 `pack_install` 安裝。
+
+## 8. 發佈到索引
 
 1. 把包放到 GitHub（獨立 repo 或某個 repo 的子目錄）
 2. 取得要發佈的 commit SHA

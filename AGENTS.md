@@ -56,6 +56,12 @@ the CLI below offers the same operations with `--json`.
 - `model export <name> --format bundle|onnx` / MCP `model_export`.
 - Humans run `autoforge serve` (REST) and `autoforge serve-mcp` (each model as tool `predict_<name>`).
 
+## Writing a new pack (P7)
+- MCP `pack_create(name, files)` writes a pack into the workspace and validates it (nothing runs);
+  `pack_test(path)` runs its tests; `pack_install(path)` installs it. CLI: `pack new`, `pack test`.
+- To turn a GitHub training repo into a pack: read the repo, write pack.yaml + KNOWLEDGE.md + recipes +
+  a trainer using the TrainContext contract (docs/PACK_SPEC.md §5) + a CPU smoke test, then create/test/install.
+
 ## Error codes
 | code | meaning | what to do |
 |---|---|---|
@@ -76,8 +82,11 @@ the CLI below offers the same operations with `--json`.
 | MODEL_NOT_SERVABLE | recipe has no predictor | train with a recipe that has one |
 | INVALID_INPUT | rows missing features / wrong types; `data.features` lists them | fix the rows |
 | MODEL_ERROR | register/export/predict failed | read the message |
+| PACK_AUTHORING_ERROR | bad name, unsafe path, pack exists | fix and retry (overwrite=true to replace) |
+| PACK_TEST_FAILED | pack smoke tests failed; `data.output_tail` | fix the pack |
 
-## Commands available now (P6)
+## Commands available now (P7)
+- `pack new | test`
 - `model register | list | info | predict | export | import | remove`, `serve`, `serve-mcp`
 - `hpo start | status | list | stop`, `run diagnose | adjust | compare`
 - `train "<goal>" --data <path> --brain <provider:model>` (built-in agent; see docs/AGENT.md)

@@ -1,0 +1,10 @@
+name: text-classification
+version: 0.1.0
+summary: Classify text (sentiment, intent, topic, spam...) from a CSV with a text column and a label column.
+tasks: [text-classification]
+recipes: [tfidf_linear, transformer_finetune]
+dependencies: [scikit-learn>=1.3, pandas>=2.0, joblib>=1.3]
+# transformer_finetune also needs: torch, transformers>=4.40
+authors: [AutoForge]
+license: MIT
+min_autoforge: 0.8.0

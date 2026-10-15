@@ -7,7 +7,20 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> 目前狀態：**P6 部署**（模型註冊、REST API、模型變成 MCP 工具、ONNX 匯出，見 [docs/DEPLOY.md](docs/DEPLOY.md)）。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+> 目前狀態：**P7 擴充方法包**（6 個方法包，見下表）。可以用一句話訓練（[docs/AGENT.md](docs/AGENT.md)），也可以讓訂閱制 AI 透過 MCP 操作（[docs/MCP.md](docs/MCP.md)）。完整設計見 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)，進度見 [docs/ROADMAP.md](docs/ROADMAP.md)。
+
+## 內建方法包
+
+| 方法包 | 用途 | 方法 | 硬體 |
+|---|---|---|---|
+| `tabular-classic` | 表格分類、回歸 | 邏輯迴歸、隨機森林（可匯出 ONNX） | CPU |
+| `text-classification` | 文字分類（情緒、意圖、主題、垃圾訊息） | TF-IDF + 線性模型；Transformer 微調 | CPU / GPU |
+| `llm-finetune` | 大型語言模型微調 | LoRA / QLoRA（可匯出合併後的權重） | GPU（8GB+） |
+| `image-classification` | 圖片分類 | timm 預訓練模型微調（可匯出 ONNX） | GPU 建議，CPU 可跑小模型 |
+| `timeseries-forecast` | 時間序列預測（銷量、用電、流量） | 落後特徵 + 梯度提升，和「明天＝今天」的基準比較 | CPU |
+| `anomaly-detection` | 異常偵測（詐欺、故障、離群值） | Isolation Forest | CPU |
+
+每個方法包都附給 AI 讀的 `KNOWLEDGE.md`，以及在 CPU 上 30 秒內跑完的測試。自己做方法包：`autoforge pack new`（見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)）。
 
 ## 安裝
 

@@ -1,0 +1,16 @@
+id: timm_finetune
+name: Fine-tune a pretrained timm model
+task_types: [image-classification]
+entrypoint: trainers/timm_train.py:train
+predictor: trainers/timm_train.py
+exporters:
+  onnx: trainers/timm_train.py:export_onnx
+requires: { device: any, min_ram_gb: 4 }
+good_for: Product photos, defects, documents, medical-style categories; 50+ images per class; GPU strongly recommended, small models run on CPU.
+avoid_when: You need boxes around objects (detection) or pixel masks (segmentation).
+defaults: { model_name: resnet18, pretrained: true, image_size: 224, epochs: 5, batch_size: 32,
+            learning_rate: 0.0003, weight_decay: 0.0001, freeze_backbone_epochs: 1, val_fraction: 0.2 }
+search_space:
+  learning_rate: { type: float, low: 0.00005, high: 0.003, log: true }
+  epochs: { type: int, low: 3, high: 15 }
+  model_name: { choices: [resnet18, resnet50, efficientnet_b0, convnext_tiny] }

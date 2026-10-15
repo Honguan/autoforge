@@ -1,0 +1,12 @@
+id: isolation_forest
+name: Isolation Forest
+task_types: [anomaly-detection]
+entrypoint: trainers/iforest.py:train
+predictor: trainers/iforest.py
+requires: { device: cpu, min_ram_gb: 1 }
+good_for: Unlabelled tabular data where anomalies are rare (< 5%) and look different from normal rows; fast on millions of rows.
+avoid_when: You have plenty of labelled anomalies (train a classifier with tabular-classic instead).
+defaults: { contamination: 0.02, n_estimators: 300, max_samples: auto, exclude: [] }
+search_space:
+  contamination: { type: float, low: 0.005, high: 0.1, log: true }
+  n_estimators: { type: int, low: 100, high: 800 }

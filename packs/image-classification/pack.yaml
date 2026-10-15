@@ -1,0 +1,10 @@
+name: image-classification
+version: 0.1.0
+summary: Classify images into categories by fine-tuning a pretrained timm CNN/ViT (folder-per-class data).
+tasks: [image-classification]
+recipes: [timm_finetune]
+dependencies: [torch>=2.3, torchvision>=0.18, timm>=1.0, pillow>=10.0]
+# ONNX export also needs: onnx, onnxscript
+authors: [AutoForge]
+license: MIT
+min_autoforge: 0.8.0

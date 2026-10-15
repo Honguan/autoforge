@@ -1,0 +1,13 @@
+id: tfidf_linear
+name: TF-IDF + linear classifier
+task_types: [text-classification]
+entrypoint: trainers/tfidf.py:train
+predictor: trainers/tfidf.py
+requires: { device: cpu, min_ram_gb: 1 }
+good_for: First baseline for any language; seconds to train on CPU; strong for topic, spam and keyword-driven labels.
+avoid_when: Meaning depends on word order or context (sarcasm, negation-heavy sentiment) and a GPU is available.
+defaults: { text_column: text, analyzer: char_wb, ngram_max: 4, max_features: 200000, min_df: 2, C: 4.0, class_weight: balanced }
+search_space:
+  C: { type: float, low: 0.05, high: 50, log: true }
+  ngram_max: { type: int, low: 2, high: 5 }
+  min_df: { type: int, low: 1, high: 5 }

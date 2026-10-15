@@ -1,0 +1,9 @@
+name: anomaly-detection
+version: 0.1.0
+summary: Find unusual rows (fraud, faults, outliers) in tabular data without labels, with Isolation Forest.
+tasks: [anomaly-detection]
+recipes: [isolation_forest]
+dependencies: [scikit-learn>=1.3, pandas>=2.0, joblib>=1.3]
+authors: [AutoForge]
+license: MIT
+min_autoforge: 0.8.0
