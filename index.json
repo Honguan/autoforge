@@ -3,10 +3,10 @@
   "packs": [
     {
       "name": "tabular-classic",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "summary": "Classic machine learning for tabular (CSV) data. CPU only, fast, explainable baselines.",
       "source": "github:Honguan/autoforge/packs/tabular-classic",
-      "commit_sha": "5c7fa5e5f1879821d0890cffd0d688359fab3d1d",
+      "commit_sha": "1f7d5c4cf0545c754640004a853ef2da5f6a2b1d",
       "tasks": [
         "tabular-classification",
         "tabular-regression"

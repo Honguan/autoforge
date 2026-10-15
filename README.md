@@ -17,7 +17,7 @@ AutoForge 預設讀取：
 
 | 方法包 | 任務 | 硬體 |
 |---|---|---|
-| `tabular-classic` | 表格分類、回歸 | CPU |
+| `tabular-classic` 0.2.0 | 表格分類、回歸 | CPU |
 
 ## 新增或更新方法包
 
