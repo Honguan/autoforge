@@ -18,6 +18,11 @@ AutoForge 預設讀取：
 | 方法包 | 任務 | 硬體 |
 |---|---|---|
 | `tabular-classic` 0.3.0 | 表格分類、回歸（可預測、可匯出 ONNX） | CPU |
+| `text-classification` 0.1.0 | 文字分類（TF-IDF、Transformer 微調） | CPU / GPU |
+| `llm-finetune` 0.1.0 | LLM 微調（LoRA / QLoRA） | GPU 8GB+ |
+| `image-classification` 0.1.0 | 圖片分類（timm） | GPU 建議 |
+| `timeseries-forecast` 0.1.0 | 時間序列預測 | CPU |
+| `anomaly-detection` 0.1.0 | 異常偵測 | CPU |
 
 ## 新增或更新方法包
 

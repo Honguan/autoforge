@@ -2,6 +2,91 @@
   "schema_version": 1,
   "packs": [
     {
+      "name": "anomaly-detection",
+      "version": "0.1.0",
+      "summary": "Find unusual rows (fraud, faults, outliers) in tabular data without labels, with Isolation Forest.",
+      "source": "github:Honguan/autoforge/packs/anomaly-detection",
+      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "tasks": [
+        "anomaly-detection"
+      ],
+      "tags": [
+        "anomaly",
+        "outlier",
+        "fraud",
+        "unsupervised",
+        "csv"
+      ],
+      "recipes": [
+        {
+          "id": "isolation_forest",
+          "task_types": [
+            "anomaly-detection"
+          ],
+          "device": "cpu",
+          "min_vram_gb": 0.0,
+          "good_for": "Unlabelled tabular data where anomalies are rare (< 5%) and look different from normal rows; fast on millions of rows."
+        }
+      ]
+    },
+    {
+      "name": "image-classification",
+      "version": "0.1.0",
+      "summary": "Classify images into categories by fine-tuning a pretrained timm CNN/ViT (folder-per-class data).",
+      "source": "github:Honguan/autoforge/packs/image-classification",
+      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "tasks": [
+        "image-classification"
+      ],
+      "tags": [
+        "image",
+        "vision",
+        "cnn",
+        "timm",
+        "onnx"
+      ],
+      "recipes": [
+        {
+          "id": "timm_finetune",
+          "task_types": [
+            "image-classification"
+          ],
+          "device": "any",
+          "min_vram_gb": 0.0,
+          "good_for": "Product photos, defects, documents, medical-style categories; 50+ images per class; GPU strongly recommended, small models run on CPU."
+        }
+      ]
+    },
+    {
+      "name": "llm-finetune",
+      "version": "0.1.0",
+      "summary": "Fine-tune an open LLM on your instructions/chats with LoRA or QLoRA (4-bit) on one NVIDIA GPU.",
+      "source": "github:Honguan/autoforge/packs/llm-finetune",
+      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "tasks": [
+        "llm-sft"
+      ],
+      "tags": [
+        "llm",
+        "lora",
+        "qlora",
+        "sft",
+        "chat",
+        "gpu"
+      ],
+      "recipes": [
+        {
+          "id": "sft_lora",
+          "task_types": [
+            "llm-sft"
+          ],
+          "device": "cuda",
+          "min_vram_gb": 8.0,
+          "good_for": "Teach a 0.5B–8B open model a style, format or domain from 200+ prompt/response pairs; QLoRA fits 7–8B in 8–12 GB VRAM."
+        }
+      ]
+    },
+    {
       "name": "tabular-classic",
       "version": "0.3.0",
       "summary": "Classic machine learning for tabular (CSV) data. CPU only, fast, explainable baselines.",
@@ -37,6 +122,72 @@
           "device": "cpu",
           "min_vram_gb": 0.0,
           "good_for": "Strong default for tabular data; handles non-linearity and mixed feature types with little tuning."
+        }
+      ]
+    },
+    {
+      "name": "text-classification",
+      "version": "0.1.0",
+      "summary": "Classify text (sentiment, intent, topic, spam...) from a CSV with a text column and a label column.",
+      "source": "github:Honguan/autoforge/packs/text-classification",
+      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "tasks": [
+        "text-classification"
+      ],
+      "tags": [
+        "text",
+        "nlp",
+        "sentiment",
+        "intent",
+        "transformer",
+        "csv"
+      ],
+      "recipes": [
+        {
+          "id": "tfidf_linear",
+          "task_types": [
+            "text-classification"
+          ],
+          "device": "cpu",
+          "min_vram_gb": 0.0,
+          "good_for": "First baseline for any language; seconds to train on CPU; strong for topic, spam and keyword-driven labels."
+        },
+        {
+          "id": "transformer_finetune",
+          "task_types": [
+            "text-classification"
+          ],
+          "device": "cuda",
+          "min_vram_gb": 4.0,
+          "good_for": "Best accuracy when context matters; 1k+ labelled examples; any language with a multilingual model."
+        }
+      ]
+    },
+    {
+      "name": "timeseries-forecast",
+      "version": "0.1.0",
+      "summary": "Forecast the next values of a numeric time series (sales, demand, load, traffic) with lag features + gradient boosting.",
+      "source": "github:Honguan/autoforge/packs/timeseries-forecast",
+      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "tasks": [
+        "timeseries-forecast"
+      ],
+      "tags": [
+        "timeseries",
+        "forecast",
+        "sales",
+        "demand",
+        "csv"
+      ],
+      "recipes": [
+        {
+          "id": "lag_gbm",
+          "task_types": [
+            "timeseries-forecast"
+          ],
+          "device": "cpu",
+          "min_vram_gb": 0.0,
+          "good_for": "One regular series (daily/hourly/weekly) with 100+ points; captures trend-free seasonality and recent momentum."
         }
       ]
     }
