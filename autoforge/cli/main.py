@@ -8,6 +8,7 @@ import typer
 from autoforge import __version__
 from autoforge.cli.output import JsonOpt, emit, fail
 from autoforge.cli.packs import index_app, pack_app
+from autoforge.cli.data import data_app
 from autoforge.cli.runs import plan_app, run_app
 from autoforge.hardware.detect import detect_hardware
 from autoforge.engine.runner import RunView
@@ -20,6 +21,7 @@ app.add_typer(pack_app, name="pack")
 app.add_typer(index_app, name="index")
 app.add_typer(plan_app, name="plan")
 app.add_typer(run_app, name="run")
+app.add_typer(data_app, name="data")
 
 ALL_SCHEMAS = SCHEMAS | {
     "PackManifest": PackManifest,
@@ -64,6 +66,19 @@ def doctor(as_json: bool = JsonOpt) -> None:
     for n in hw.detection_notes:
         lines.append(f"  note: {n}")
     emit(False, human="\n".join(lines))
+
+
+@app.command()
+def mcp(
+    actor: str = typer.Option(
+        "ai:mcp", "--actor",
+        help="Recorded in audit logs. Use 'ai:local:<model>' only if the MCP client is driven by a local model.",
+    ),
+) -> None:
+    """Run the MCP server over stdio (for Claude Desktop, Claude Code and other MCP clients)."""
+    from autoforge.serve.mcp_server import main as serve
+
+    serve(actor)
 
 
 @app.command()

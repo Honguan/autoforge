@@ -28,9 +28,11 @@ from autoforge.engine.store import (
     runs_dir,
     wait_for,
 )
+from autoforge.data.registry import sensitivity_of
 from autoforge.engine.validate import require_valid
 from autoforge.errors import AutoForgeError
-from autoforge.schemas.core import HardwareProfile, RunStatus, TrainingPlan
+from autoforge.policy.privacy import brain_from_actor, require_access
+from autoforge.schemas.core import BrainKind, HardwareProfile, RunStatus, TrainingPlan
 
 
 class RunStateError(AutoForgeError):
@@ -82,13 +84,21 @@ def _tree(p: psutil.Process) -> list[psutil.Process]:
 # ---------- create / start ----------
 
 
+def require_data_access(plan: TrainingPlan, actor: str, brain: BrainKind | None = None) -> None:
+    """Privacy guard (requirement #8): sensitive data only under a local model or a human."""
+    b = brain or brain_from_actor(actor)
+    require_access(b, sensitivity_of(plan.data_path), plan.data_path)
+
+
 def create_run(
     plan: TrainingPlan,
     actor: str = "human",
     hardware: HardwareProfile | None = None,
     resume_from: str | None = None,
     retry_of: str | None = None,
+    brain: BrainKind | None = None,
 ) -> RunStore:
+    require_data_access(plan, actor, brain)
     check = require_valid(plan, hardware)
     effective = plan.model_copy(update={"hyperparameters": check.hyperparameters})
     store = RunStore(runs_dir() / new_run_id(plan))
@@ -260,7 +270,7 @@ def stop(store: RunStore, actor: str = "human", grace_seconds: float = 10.0) -> 
     return status(store)
 
 
-def retry(store: RunStore, actor: str = "human") -> RunStore:
+def retry(store: RunStore, actor: str = "human", brain: BrainKind | None = None) -> RunStore:
     """New run with the same plan; trainers can resume from the old run's checkpoints."""
     rec = store.record()
     ckpt = store.dir / "checkpoints"
@@ -269,7 +279,7 @@ def retry(store: RunStore, actor: str = "human") -> RunStore:
     if plan.custom_code_path:
         file, func = rec.entrypoint.rsplit(":", 1)  # use the snapshot that actually ran
         plan = plan.model_copy(update={"custom_code_path": f"{file}:{func}"})
-    return create_run(plan, actor, resume_from=str(ckpt) if has_ckpt else None, retry_of=rec.run_id)
+    return create_run(plan, actor, resume_from=str(ckpt) if has_ckpt else None, retry_of=rec.run_id, brain=brain)
 
 
 def metrics_summary(store: RunStore, last: int = 5) -> dict:

@@ -1,6 +1,8 @@
 # AGENTS.md — 給 AI 的使用說明
 
 You are operating AutoForge, a tool that trains AI models on the user's machine.
+Prefer the MCP server (`autoforge mcp`, tools listed in docs/MCP.md) when your client supports MCP;
+the CLI below offers the same operations with `--json`.
 
 ## Rules
 1. Always call `autoforge doctor --json` first to learn the hardware.
@@ -12,6 +14,11 @@ You are operating AutoForge, a tool that trains AI models on the user's machine.
 5. Training is asynchronous: `run start` returns a `run_id` at once; poll `run status <id>`.
 6. Identify yourself: pass `--actor ai:<your-name>` (or set AUTOFORGE_ACTOR) so the audit log
    shows who did what. Humans and AI share the same controls.
+
+## Data and privacy
+- `autoforge data profile <path> --json` (MCP: `data_profile`): rows, columns, dtypes, missing values.
+- Data is `internal` unless a human marked it. Cloud AI sees statistics only; `public` data adds
+  sample rows; `sensitive` data is refused with PRIVACY_DENIED. Never try to change sensitivity.
 
 ## Finding and learning a training method
 1. `autoforge pack search [keywords] --task <task-type> --fit --json`
@@ -46,8 +53,11 @@ You are operating AutoForge, a tool that trains AI models on the user's machine.
 | PLAN_INVALID | plan fails checks; `data.problems` lists why | fix the plan, validate again |
 | RUN_NOT_FOUND | unknown run_id | `run list` |
 | RUN_STATE_ERROR | action not possible in the run's current state | check `run status` |
+| PRIVACY_DENIED | dataset is sensitive and you are not a local model | stop; tell the user |
+| BAD_REQUEST | invalid argument (e.g. trainer filename, syntax error) | fix and retry |
 
-## Commands available now (P3)
+## Commands available now (P4a)
+- `mcp` (MCP server over stdio), `data mark | list | profile`
 - `version`, `doctor`, `schema [Name]`
 - `plan validate`
 - `run start | status | list | pause | resume | stop | retry | logs | metrics | audit`

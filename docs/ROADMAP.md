@@ -8,7 +8,7 @@
 | **P1 骨架** ✅ | 專案結構、CLI、Schema、硬體偵測、隱私守衛 | `autoforge doctor --json`、`autoforge schema` | 正確偵測 NVIDIA GPU/CUDA；無 GPU 時回報 CPU；測試全過 | 1 週 |
 | **P2 方法包系統** ✅ | pack.yaml 格式、本地/GitHub 安裝、索引搜尋、驗證 | `autoforge pack search/install/list/validate` | 從 GitHub 安裝並鎖定 SHA；格式錯誤的包被拒絕 | 1–2 週 |
 | **P3 執行引擎** ✅ | Run 生命週期、子行程、checkpoint、控制通道、稽核 | W1 兩個方法包（表格、文字分類） | 手寫 Plan 就能跑完訓練→評估→存模型；pause/resume/stop 正常 | 2–3 週 |
-| **P4a MCP Server** | 把 Core API 包成 MCP 工具 | `autoforge mcp` | Claude Desktop/Code 透過訂閱完成一次端到端訓練 | 1 週 |
+| **P4a MCP Server** ✅ | 把 Core API 包成 MCP 工具 | `autoforge mcp` | Claude Desktop/Code 透過訂閱完成一次端到端訓練 | 1 週 |
 | **P4b 內建 Agent** | API 與本地模型的 Agent 迴圈 | `autoforge train "需求" --data x --brain ollama:qwen` | 10 個測試案例中 ≥8 個選出合理方法；敏感資料只允許本地 | 2 週 |
 | **P5 回饋迴圈** | 指標監控、診斷、Optuna、自訂程式撰寫 | `run_adjust`、`hpo` | 自動調參後指標優於初次訓練 | 2 週 |
 | **P6 部署** | 模型倉庫、匯出、推論 API、模型變 MCP 工具 | `autoforge serve <model>` | 訓練好的模型能被其他 AI 透過 MCP 呼叫 | 1–2 週 |
@@ -24,4 +24,6 @@
 
 ## 實作備註
 
+- **P4a**：隱私守衛依 actor 判斷大腦類型（`ai:local:*` 視為本地模型）。MCP 路徑由伺服器設定的 actor 決定，AI 無法自行更改；CLI 則信任使用者宣告的 `--actor`。
+- **P4a**：Claude Desktop/Code 的實機連線待使用者驗證；自動化測試用同一個 MCP SDK 的 stdio 客戶端完成了完整流程。
 - **P3**：訓練中途改參數（「控制通道：修改參數」）需要訓練程式配合讀取新參數，和自動調參一起放到 P5。

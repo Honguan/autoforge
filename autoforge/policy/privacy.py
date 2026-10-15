@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from enum import Enum
 
+from autoforge.errors import AutoForgeError
 from autoforge.schemas.core import BrainKind, Sensitivity
 
 
@@ -23,17 +24,30 @@ class Access(str, Enum):
     denied = "denied"
 
 
-class PrivacyDenied(Exception):
+class PrivacyDenied(AutoForgeError):
     code = "PRIVACY_DENIED"
+    hint = (
+        "Do not retry. Sensitive data may only be used when a local model is in control "
+        "(actor 'ai:local:<model>') or by a human."
+    )
 
-    def __init__(self, brain: BrainKind, sensitivity: Sensitivity):
+    def __init__(self, brain: BrainKind, sensitivity: Sensitivity, path: str | None = None):
         self.brain = brain
         self.sensitivity = sensitivity
+        where = f" ({path})" if path else ""
         super().__init__(
-            f"Dataset marked '{sensitivity.value}' cannot be used with a '{brain.value}' brain."
+            f"Dataset marked '{sensitivity.value}'{where} cannot be used with a '{brain.value}' brain.",
+            details={"brain": brain.value, "sensitivity": sensitivity.value, "path": path},
         )
 
-    hint = "Switch to a local model brain (e.g. --brain ollama:<model>) to use sensitive data."
+
+def brain_from_actor(actor: str) -> BrainKind:
+    """'human' -> human, 'ai:local' / 'ai:local:<model>' -> local, any other 'ai:...' -> api (cloud)."""
+    if actor == "human":
+        return BrainKind.human
+    if actor == "ai:local" or actor.startswith("ai:local:"):
+        return BrainKind.local
+    return BrainKind.api
 
 
 def data_access(brain: BrainKind, sensitivity: Sensitivity) -> Access:
@@ -46,9 +60,9 @@ def data_access(brain: BrainKind, sensitivity: Sensitivity) -> Access:
     return Access.denied
 
 
-def require_access(brain: BrainKind, sensitivity: Sensitivity) -> Access:
+def require_access(brain: BrainKind, sensitivity: Sensitivity, path: str | None = None) -> Access:
     """Return the allowed access level, or raise PrivacyDenied."""
     access = data_access(brain, sensitivity)
     if access is Access.denied:
-        raise PrivacyDenied(brain, sensitivity)
+        raise PrivacyDenied(brain, sensitivity, path)
     return access

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "autoforge"
-version = "0.3.0"
+version = "0.4.0"
 description = "Let AI analyze, plan, train, evaluate and deploy AI models on your own hardware."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,6 +14,7 @@ dependencies = [
     "typer>=0.12",
     "psutil>=5.9",
     "pyyaml>=6.0",
+    "mcp>=2.3,<3",
 ]
 
 [project.optional-dependencies]

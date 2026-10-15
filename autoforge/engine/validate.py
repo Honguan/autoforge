@@ -41,12 +41,16 @@ def load_plan_file(path: Path) -> TrainingPlan:
         raise PlanInvalid(f"plan file not found: {path}")
     except yaml.YAMLError as e:
         raise PlanInvalid(f"plan file is not valid YAML/JSON: {e}")
+    return parse_plan(raw, path.resolve().parent)
+
+
+def parse_plan(raw: object, base: Path) -> TrainingPlan:
+    """Validate a plan dict; relative paths are resolved against `base`."""
     try:
         plan = TrainingPlan.model_validate(raw)
     except ValidationError as e:
         problems = [f"{'.'.join(map(str, err['loc']))}: {err['msg']}" for err in e.errors()]
         raise PlanInvalid("plan does not match the TrainingPlan schema", details={"problems": problems})
-    base = path.resolve().parent
     plan.data_path = str((base / plan.data_path).resolve())
     if plan.custom_code_path:
         file, _, func = plan.custom_code_path.partition(":")
