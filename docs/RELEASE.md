@@ -15,7 +15,7 @@
 
 | 設定 | 步驟 |
 |---|---|
-| PyPI Trusted Publishing | 登入 pypi.org → Your account → Publishing → **Add a new pending publisher**：PyPI project name `autoforge-ml`、Owner `Honguan`、Repository `autoforge`、Workflow `release.yml`、Environment `pypi` |
+| PyPI Trusted Publishing | 登入 pypi.org → Your account → Publishing → **Add a new pending publisher**：PyPI project name `autoforge-trainer`、Owner `Honguan`、Repository `autoforge`、Workflow `release.yml`、Environment `pypi` |
 | GitHub 環境 | repo Settings → Environments → New environment，名稱填 `pypi`（建議設 Required reviewers，發佈前要你按同意） |
 | GitHub Pages | repo Settings → Pages → Source 選 **GitHub Actions** |
 | GHCR 映像公開 | 第一次推送後：GitHub 個人頁 → Packages → `autoforge` → Package settings → Change visibility → Public |

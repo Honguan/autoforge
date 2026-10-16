@@ -24,7 +24,7 @@
 
 ## 實作備註
 
-- **P9**：驗收結果：在乾淨的 `python:3.12-slim` 和 `python:3.11-slim` 容器（沒有 git）裡，`pip install` wheel 加上 `autoforge quickstart` 總共 63 秒。測試中發現沒有 git 就裝不了方法包，已改成沒有 git 時直接從 GitHub 下載 commit 的 tarball。CPU Docker 映像實測可以跑 quickstart 和 GUI。PyPI 名稱 `autoforge` 已被不相關的專案使用，`autoforge-ai` 又因為和既有的 `autoforgeai` 太相似被 PyPI 拒絕，所以改用 `autoforge-ml`（1.0.1 起）。正式發佈（PyPI、GHCR、GitHub Pages）需要做一次設定，見 docs/RELEASE.md。
+- **P9**：驗收結果：在乾淨的 `python:3.12-slim` 和 `python:3.11-slim` 容器（沒有 git）裡，`pip install` wheel 加上 `autoforge quickstart` 總共 63 秒。測試中發現沒有 git 就裝不了方法包，已改成沒有 git 時直接從 GitHub 下載 commit 的 tarball。CPU Docker 映像實測可以跑 quickstart 和 GUI。PyPI 名稱 `autoforge` 已被不相關的專案使用，`autoforge-ai` 又因為和既有的 `autoforgeai` 太相似被 PyPI 拒絕，`autoforge-ml` 則在發佈前被別人註冊，所以改用 `autoforge-trainer`（1.0.2 起）。正式發佈（PyPI、GHCR、GitHub Pages）需要做一次設定，見 docs/RELEASE.md。
 - **P8**：驗收結果：Playwright 用真的 Chromium 跑完上傳 → 選任務 → 選方法（從 GitHub 索引自動安裝）→ 訓練 → 註冊 → 預測 → 自動調參，過程中沒有 JavaScript 錯誤。內建 AI 代理（`autoforge train`）的對話介面還沒放進 GUI，可以和 P9 一起評估。
 - **P7（第一批）**：新增 text-classification、llm-finetune（LoRA/QLoRA）、image-classification、timeseries-forecast、anomaly-detection，加上 tabular-classic 共 6 個方法包，每個都有 KNOWLEDGE.md 和煙霧測試。GPU 方法用極小模型在 CPU 上驗證過程式路徑，但尚未在真的 NVIDIA GPU 上跑過（QLoRA 的 4-bit 路徑只能在 GPU 驗證）。另有 `pack new` 骨架、`pack test`、MCP `pack_create`（AI 把 GitHub 專案轉成方法包）、GitHub Actions CI。
 - **P7（待做）**：物件偵測、影像分割、Embedding 微調、語音辨識（Whisper）、DPO、圖像生成 LoRA、強化學習、推薦系統、多序列預測。

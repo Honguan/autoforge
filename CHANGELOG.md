@@ -1,5 +1,9 @@
 # 變更紀錄
 
+## 1.0.2 — 2026-10
+
+- **PyPI 套件名稱改為 `autoforge-trainer`**：`autoforge-ml` 在我們發佈前被別人註冊了。指令和 `import autoforge` 都不變。1.0.1 沒有上傳到 PyPI。
+
 ## 1.0.1 — 2026-10
 
 - **PyPI 套件名稱改為 `autoforge-ml`**：`autoforge-ai` 和 PyPI 上既有的 `autoforgeai` 太相似，無法註冊。指令和 `import autoforge` 都不變。
