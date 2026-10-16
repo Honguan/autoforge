@@ -75,20 +75,14 @@
     },
     {
       "name": "image-classification",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "summary": "Classify images into categories by fine-tuning a pretrained timm CNN/ViT (folder-per-class data).",
       "source": "github:Honguan/autoforge/packs/image-classification",
-      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "commit_sha": "68e6432882bf7c1d16a8c54984edde24c9f4c42a",
       "tasks": [
         "image-classification"
       ],
-      "tags": [
-        "image",
-        "vision",
-        "cnn",
-        "timm",
-        "onnx"
-      ],
+      "tags": [],
       "recipes": [
         {
           "id": "timm_finetune",
@@ -125,21 +119,14 @@
     },
     {
       "name": "llm-finetune",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "summary": "Fine-tune an open LLM on your instructions/chats with LoRA or QLoRA (4-bit) on one NVIDIA GPU.",
       "source": "github:Honguan/autoforge/packs/llm-finetune",
-      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "commit_sha": "68e6432882bf7c1d16a8c54984edde24c9f4c42a",
       "tasks": [
         "llm-sft"
       ],
-      "tags": [
-        "llm",
-        "lora",
-        "qlora",
-        "sft",
-        "chat",
-        "gpu"
-      ],
+      "tags": [],
       "recipes": [
         {
           "id": "sft_lora",
