@@ -56,7 +56,7 @@ class InvalidInput(ModelError):
 
 class Feature(BaseModel):
     name: str
-    dtype: Literal["numeric", "categorical", "text", "image", "any"]
+    dtype: Literal["numeric", "categorical", "text", "image", "audio", "any"]
     description: str = ""
     required: bool = True
     known_values: list[str] | None = Field(default=None, description="seen in training (low-cardinality columns only)")
@@ -267,7 +267,7 @@ def validate_rows(card: ModelCard, rows: Any) -> list[str]:
                     problems.append(f"row {i}: '{f.name}' must be a number, got {v!r}")
             if f.dtype == "categorical" and f.known_values and v is not None and str(v) not in f.known_values:
                 warnings.append(f"row {i}: '{f.name}'={v!r} was not seen in training")
-            if f.dtype in ("text", "image") and v is not None and not isinstance(v, str):
+            if f.dtype in ("text", "image", "audio") and v is not None and not isinstance(v, str):
                 problems.append(f"row {i}: '{f.name}' must be a string")
         extra = sorted(set(row) - names)
         if extra:

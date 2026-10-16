@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -110,3 +111,18 @@ def test_install_from_github_without_git(monkeypatch, tmp_path):
     assert rec.commit_sha == sha and rec.name == "tabular-classic"
     assert calls == ["https://api.github.com/repos/me/repo/commits/main",
                      f"https://codeload.github.com/me/repo/tar.gz/{sha}"]
+
+
+def test_pack_needing_newer_autoforge_is_refused(tmp_path):
+    import shutil
+
+    from autoforge.packs.errors import PackTooNew
+
+    src = tmp_path / "future"
+    shutil.copytree(Path(__file__).resolve().parents[1] / "packs" / "anomaly-detection", src,
+                    ignore=shutil.ignore_patterns("__pycache__"))
+    text = (src / "pack.yaml").read_text()
+    (src / "pack.yaml").write_text(text.replace("min_autoforge: 0.8.0", "min_autoforge: 99.0.0"))
+    with pytest.raises(PackTooNew, match="99.0.0"):
+        installer.install(str(src))
+    assert "anomaly-detection" not in installer.read_lock()

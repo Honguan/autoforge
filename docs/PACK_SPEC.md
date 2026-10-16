@@ -25,7 +25,7 @@
 | `tasks` | ✅ | 支援的任務類型 |
 | `recipes` | ✅ | 方法 id 列表，對應 `recipes/<id>.yaml` |
 | `dependencies` | | pip 套件需求 |
-| `authors`, `license`, `min_autoforge` | | |
+| `authors`, `license`, `min_autoforge` | | 安裝時檢查：AutoForge 版本比 `min_autoforge` 舊就拒絕（`PACK_NEEDS_NEWER_AUTOFORGE`） |
 
 ## 3. recipes/&lt;id&gt;.yaml
 
@@ -84,7 +84,7 @@ def train(ctx) -> dict:
  "labels": ["neg", "pos"]}
 ```
 
-`dtype` 可以是：`numeric`、`categorical`、`text`、`image`（路徑或 base64）、`any`。
+`dtype` 可以是：`numeric`、`categorical`、`text`、`image`（路徑或 base64）、`audio`（音檔路徑或 base64，1.1.0 起）、`any`。
 
 ## 6. 驗證規則（`autoforge pack validate`）
 

@@ -448,7 +448,7 @@ async function pageModel(ref) {
       inp = h("input", { "data-feature": f.name, list: listId });
       inputs[f.name] = { el: inp, f };
       return h("label", { class: "field" }, f.name, inp, h("datalist", { id: listId }, f.known_values.map((v) => h("option", { value: v }))));
-    } else inp = h("input", { "data-feature": f.name, placeholder: f.dtype === "image" ? "伺服器上的圖片路徑" : f.dtype === "any" ? "JSON" : "" });
+    } else inp = h("input", { "data-feature": f.name, placeholder: f.dtype === "image" ? "伺服器上的圖片路徑" : f.dtype === "audio" ? "伺服器上的音檔路徑" : f.dtype === "any" ? "JSON" : "" });
     inputs[f.name] = { el: inp, f };
     return h("label", { class: "field" }, `${f.name}${f.required ? "" : "（選填）"}${f.description ? `：${f.description}` : ""}`, inp);
   }));

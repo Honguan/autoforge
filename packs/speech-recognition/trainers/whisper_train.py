@@ -327,7 +327,7 @@ def train(ctx) -> dict:
     (out / "asr.json").write_text(json.dumps({"language": lang, "task": task, "num_beams": beams,
                                               "max_new_tokens": max_len}))
     (out / "io.json").write_text(json.dumps({"features": [
-        {"name": "audio", "dtype": "text",
+        {"name": "audio", "dtype": "audio",
          "description": "wav/flac/ogg file path on the server, or base64 / data URL of the file; max 30 s"}]}))
     return {"metrics": dict(metrics), "model_path": str(out)}
 

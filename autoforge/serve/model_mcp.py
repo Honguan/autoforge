@@ -30,7 +30,8 @@ def tool_name(model_name: str) -> str:
 def _row_model(card: reg.ModelCard):
     fields: dict[str, Any] = {}
     kinds = {"numeric": (float, "number"), "categorical": (str, "category."), "text": (str, "text."),
-             "image": (str, "image file path or base64 data."), "any": (Any, "")}
+             "image": (str, "image file path or base64 data."),
+             "audio": (str, "audio file path (wav/flac/ogg) or base64 data."), "any": (Any, "")}
     for f in card.features:
         typ, desc = kinds[f.dtype]
         known = f" Known values: {', '.join(f.known_values)}." if f.known_values else ""

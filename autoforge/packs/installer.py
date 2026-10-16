@@ -19,7 +19,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from autoforge import config
-from autoforge.packs.errors import PackExists, PackNotFound, PackSourceError, ShaMismatch
+from autoforge.packs.errors import PackExists, PackNotFound, PackSourceError, PackTooNew, ShaMismatch
 from autoforge.packs.index import load_index
 from autoforge.packs.manifest import NAME_RE, Pack, load_pack
 
@@ -187,7 +187,20 @@ def install(source: str, force: bool = False) -> InstalledPack:
         return _copy_in(pack, recorded_source, sha, force)
 
 
+def _version_tuple(v: str) -> tuple[int, ...]:
+    return tuple(int(x) for x in re.findall(r"\d+", v.split("-")[0].split("+")[0])[:3])
+
+
+def check_compatible(pack: Pack) -> None:
+    from autoforge import __version__
+
+    need = pack.manifest.min_autoforge
+    if need and _version_tuple(__version__) < _version_tuple(need):
+        raise PackTooNew(f"pack '{pack.manifest.name}' needs AutoForge {need} or newer; this is {__version__}")
+
+
 def _copy_in(pack: Pack, source: str, sha: str | None, force: bool) -> InstalledPack:
+    check_compatible(pack)
     name = pack.manifest.name
     lock = read_lock()
     dest = config.packs_dir() / name

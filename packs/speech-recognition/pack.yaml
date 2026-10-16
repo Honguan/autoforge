@@ -6,4 +6,4 @@ recipes: [whisper_finetune]
 dependencies: [torch>=2.3, transformers>=4.45, pandas>=2.0, soundfile>=0.12, scipy>=1.10]
 authors: [AutoForge]
 license: MIT
-min_autoforge: 1.0.0
+min_autoforge: 1.1.0

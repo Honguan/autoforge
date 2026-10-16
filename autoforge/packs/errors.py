@@ -28,6 +28,11 @@ class PackExists(PackError):
     hint = "Pass --force to reinstall."
 
 
+class PackTooNew(PackError):
+    code = "PACK_NEEDS_NEWER_AUTOFORGE"
+    hint = "Upgrade AutoForge: pip install -U autoforge-trainer"
+
+
 class PackSourceError(PackError):
     code = "PACK_SOURCE_ERROR"
 

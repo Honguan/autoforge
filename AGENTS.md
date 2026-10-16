@@ -69,6 +69,7 @@ the CLI below offers the same operations with `--json`.
 | PACK_EXISTS | already installed | use it, or reinstall with `--force` |
 | PACK_INVALID | pack fails validation; `data.problems` lists why | do not use it |
 | SHA_MISMATCH | source changed after indexing | do not install; tell the user |
+| PACK_NEEDS_NEWER_AUTOFORGE | pack sets `min_autoforge` above this version | tell the user: pip install -U autoforge-trainer |
 | INDEX_UNAVAILABLE | index unreachable and no cache | retry later or set AUTOFORGE_INDEX_URL |
 | PACK_SOURCE_ERROR | bad source string or git failure | check the source |
 | PLAN_INVALID | plan fails checks; `data.problems` lists why | fix the plan, validate again |
