@@ -1,8 +1,8 @@
 name: timeseries-forecast
-version: 0.1.0
-summary: Forecast the next values of a numeric time series (sales, demand, load, traffic) with lag features + gradient boosting.
+version: 0.2.0
+summary: Forecast the next values of one or many numeric time series (sales, demand, load, traffic) with lag features + gradient boosting.
 tasks: [timeseries-forecast]
-recipes: [lag_gbm]
+recipes: [lag_gbm, global_lag_gbm]
 dependencies: [scikit-learn>=1.3, pandas>=2.0, joblib>=1.3]
 authors: [AutoForge]
 license: MIT

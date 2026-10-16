@@ -4,7 +4,7 @@ FROM pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime
 ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 AUTOFORGE_HOME=/data
 RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 COPY dist/*.whl /tmp/
-RUN pip install "$(ls /tmp/*.whl)[deep,onnx,anthropic]" bitsandbytes && rm /tmp/*.whl
+RUN pip install "$(ls /tmp/*.whl)[deep,rl,onnx,anthropic]" bitsandbytes && rm /tmp/*.whl
 VOLUME /data
 EXPOSE 8800 8000
 ENTRYPOINT ["autoforge"]

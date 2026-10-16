@@ -20,8 +20,8 @@ autoforge gui                     # 網頁介面
 | 安裝方式 | 包含 |
 |---|---|
 | `pip install autoforge-trainer` | 表格、文字（TF-IDF）、時間序列、異常偵測、自動調參、網頁介面、MCP、REST |
-| `pip install "autoforge-trainer[deep]"` | 再加上 Transformer、LLM 微調（LoRA/QLoRA）、圖片分類（NVIDIA GPU） |
-| `pip install "autoforge-trainer[all]"` | 再加上 Claude 代理、ONNX 匯出 |
+| `pip install "autoforge-trainer[deep]"` | 再加上 Transformer、Embedding、LLM 微調與 DPO、圖片分類、物件偵測、影像分割、語音辨識、圖像生成 LoRA（NVIDIA GPU） |
+| `pip install "autoforge-trainer[all]"` | 再加上強化學習、Claude 代理、ONNX 匯出 |
 | `docker run --rm -p 127.0.0.1:8800:8800 -v autoforge:/data ghcr.io/honguan/autoforge:cpu` | CPU 映像，預設啟動網頁介面 |
 | `docker run --rm --gpus all -p 127.0.0.1:8800:8800 -v autoforge:/data ghcr.io/honguan/autoforge:cuda` | NVIDIA CUDA 映像，所有方法包 |
 
@@ -37,8 +37,16 @@ PyPI 上的 `autoforge` 是另一個不相關的專案（`autoforge-ai`、`autof
 | `text-classification` | 文字分類（情緒、意圖、主題、垃圾訊息） | TF-IDF + 線性模型；Transformer 微調 | CPU / GPU |
 | `llm-finetune` | 大型語言模型微調 | LoRA / QLoRA（可匯出合併後的權重） | GPU（8GB+） |
 | `image-classification` | 圖片分類 | timm 預訓練模型微調（可匯出 ONNX） | GPU 建議，CPU 可跑小模型 |
-| `timeseries-forecast` | 時間序列預測（銷量、用電、流量） | 落後特徵 + 梯度提升，和「明天＝今天」的基準比較 | CPU |
+| `timeseries-forecast` | 時間序列預測（銷量、用電、流量），單一或多條序列 | 落後特徵 + 梯度提升；多序列共用一個模型；和「明天＝今天」的基準比較 | CPU |
 | `anomaly-detection` | 異常偵測（詐欺、故障、離群值） | Isolation Forest | CPU |
+| `object-detection` | 物件偵測（框出物品、瑕疵、人車） | torchvision Faster R-CNN 微調，mAP@0.5 | GPU 建議，CPU 可跑小模型 |
+| `image-segmentation` | 影像分割（逐像素標類別） | torchvision LR-ASPP / DeepLabV3，mIoU | GPU 建議，CPU 可跑小模型 |
+| `embedding-finetune` | 文字向量微調（搜尋、RAG 檢索、相似度） | 對比學習（同批負樣本），和微調前比較 recall@1 | CPU / GPU |
+| `speech-recognition` | 語音辨識 | Whisper 微調，WER / CER，和微調前比較 | GPU 建議 |
+| `llm-preference` | LLM 偏好對齊（選好的回答、避開壞的） | DPO + LoRA / QLoRA | GPU（8GB+） |
+| `diffusion-lora` | 圖像生成風格 / 主體 LoRA | Stable Diffusion 1.x/2.x UNet LoRA | GPU（8GB+） |
+| `reinforcement-learning` | 強化學習（遊戲、控制、自己的模擬器） | stable-baselines3：PPO / A2C / DQN / SAC | CPU（小網路）/ GPU |
+| `recommendation` | 推薦系統（商品、內容） | 隱式回饋 ALS、Item-KNN，和熱門排行比較 | CPU |
 
 每個方法包都附給 AI 讀的 `KNOWLEDGE.md`，以及在 CPU 上 30 秒內跑完的測試。自己做方法包：`autoforge pack new`（見 [docs/PACK_SPEC.md](docs/PACK_SPEC.md)）。
 
@@ -46,7 +54,7 @@ PyPI 上的 `autoforge` 是另一個不相關的專案（`autoforge-ai`、`autof
 
 ```bash
 git clone https://github.com/Honguan/autoforge && cd autoforge
-pip install -e ".[dev]"            # 加上 ,deep 安裝深度學習方法包的依賴
+pip install -e ".[dev]"            # 加上 ,deep 安裝深度學習方法包的依賴，,rl 安裝強化學習的依賴
 pytest -q
 ```
 

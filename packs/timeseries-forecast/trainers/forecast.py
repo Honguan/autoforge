@@ -1,5 +1,9 @@
 """Lag/rolling features + HistGradientBoostingRegressor, evaluated on the last part of the series
-(chronological split, never shuffled) against the naive forecast (next value = last value)."""
+(chronological split, never shuffled) against the naive forecast (next value = last value).
+
+train        one series (recipe lag_gbm)
+train_global many series in one CSV (`series_column`), one shared model on per-series scaled values
+             (recipe global_lag_gbm); series with little history borrow patterns from the others."""
 
 from __future__ import annotations
 
@@ -75,6 +79,101 @@ def train(ctx) -> dict:
     return {"metrics": metrics, "model_path": str(out / "model.joblib")}
 
 
+def _scale(values: list[float]) -> float:
+    s = sum(abs(v) for v in values) / len(values)
+    return s if s > 0 else 1.0
+
+
+def _global_xy(series: list[float], scale: float, lags: int, windows: list[int]):
+    scaled = [v / scale for v in series]
+    x, y = _xy(scaled, lags, windows)
+    level = math.log1p(scale)
+    return [f + [level] for f in x], y
+
+
+def train_global(ctx) -> dict:
+    import joblib
+    import pandas as pd
+    from sklearn.ensemble import HistGradientBoostingRegressor
+
+    hp = ctx.hyperparameters
+    lags, windows = int(hp.get("lags", 14)), [int(w) for w in hp.get("windows", [3, 7])]
+    need = max(lags, *windows)
+    df = pd.read_csv(ctx.data_path)
+    scol, tcol = hp.get("series_column", "series_id"), hp.get("time_column", "date")
+    if scol not in df.columns:
+        raise ValueError(f"series column '{scol}' not in CSV columns {list(df.columns)}; set series_column")
+    if ctx.target not in df.columns:
+        raise ValueError(f"target column '{ctx.target}' not in CSV columns {list(df.columns)}")
+    if tcol in df.columns:
+        df[tcol] = pd.to_datetime(df[tcol], errors="coerce")
+        df = df.sort_values([scol, tcol], kind="stable")
+    frac = float(hp.get("test_fraction", 0.2))
+
+    train_x, train_y, tests, tails, skipped = [], [], [], {}, []
+    for sid, g in df.groupby(scol, sort=True):
+        series = pd.to_numeric(g[ctx.target], errors="coerce").interpolate(limit_direction="both").tolist()
+        n_test = max(1, int(len(series) * frac))
+        if len(series) - n_test <= need + 2:
+            skipped.append(str(sid))
+            continue
+        scale = _scale(series[:-n_test])
+        x, y = _global_xy(series, scale, lags, windows)
+        split = len(x) - n_test
+        train_x += x[:split]
+        train_y += y[:split]
+        tests.append((str(sid), scale, x[split:], series[-n_test:], series[-n_test - 1:-1]))
+        tails[str(sid)] = {"tail": series[-need:], "scale": _scale(series)}
+    if not tests:
+        raise ValueError(f"every series is too short for lags={lags} (need > {need + 2} points each plus the "
+                         f"test part); use fewer lags or more data")
+    ctx.check_stop()
+    model = HistGradientBoostingRegressor(learning_rate=float(hp.get("learning_rate", 0.05)),
+                                          max_iter=int(hp.get("max_iter", 300)),
+                                          max_leaf_nodes=int(hp.get("max_leaf_nodes", 31)), random_state=ctx.seed)
+    model.fit(train_x, train_y)
+    ctx.check_stop()
+
+    abs_err = naive_err = sq_err = total = 0.0
+    n = 0
+    for i, (sid, scale, x, actual, naive) in enumerate(tests):
+        pred = [p * scale for p in model.predict(x)]
+        err = sum(abs(a - p) for a, p in zip(actual, pred))
+        abs_err += err
+        naive_err += sum(abs(a - p) for a, p in zip(actual, naive))
+        sq_err += sum((a - p) ** 2 for a, p in zip(actual, pred))
+        total += sum(abs(a) for a in actual)
+        n += len(actual)
+        ctx.log_metric("series_mae", err / len(actual), step=i)
+    mae, naive_mae = abs_err / n, naive_err / n
+    metrics = {"mae": mae, "rmse": math.sqrt(sq_err / n), "naive_mae": naive_mae,
+               "skill_vs_naive": 1 - mae / naive_mae if naive_mae else 0.0,
+               "wape": abs_err / total if total else float("nan"), "n_series": float(len(tests))}
+    if math.isnan(metrics["wape"]):
+        del metrics["wape"]
+    ctx.log(f"{len(tests)} series ({len(skipped)} too short, used for serving only if long enough: "
+            f"{skipped[:5]}{'...' if len(skipped) > 5 else ''}); MAE {mae:.4g} vs naive {naive_mae:.4g}")
+
+    all_x, all_y = [], []  # refit on everything for serving
+    for sid, g in df.groupby(scol, sort=True):
+        series = pd.to_numeric(g[ctx.target], errors="coerce").interpolate(limit_direction="both").tolist()
+        if len(series) > need:
+            x, y = _global_xy(series, _scale(series), lags, windows)
+            all_x += x
+            all_y += y
+            tails.setdefault(str(sid), {"tail": series[-need:], "scale": _scale(series)})
+    model.fit(all_x, all_y)
+    out = Path(ctx.output_dir)
+    joblib.dump({"model": model, "lags": lags, "windows": windows, "series": tails}, out / "model.joblib")
+    (out / "io.json").write_text(json.dumps({"features": [
+        {"name": "series", "dtype": "text", "required": False,
+         "description": "series id from the training data; continues that series"},
+        {"name": "history", "dtype": "any", "required": False,
+         "description": f"recent values, oldest first (>= {need}); for a new series or after new data"},
+        {"name": "horizon", "dtype": "numeric", "required": False, "description": "steps to forecast (default 1)"}]}))
+    return {"metrics": metrics, "model_path": str(out / "model.joblib")}
+
+
 def load_model(model_dir):
     import joblib
 
@@ -85,13 +184,25 @@ def predict(m, rows: list[dict]) -> list[dict]:
     need = max(m["lags"], *m["windows"])
     out = []
     for row in rows:
-        history = [float(v) for v in (row.get("history") or m["tail"])]
+        scale, extra = 1.0, []
+        if "series" in m:  # global model
+            known = m["series"].get(str(row.get("series"))) if row.get("series") is not None else None
+            if row.get("history"):
+                history = [float(v) for v in row["history"]]
+                scale = _scale(history)
+            elif known:
+                history, scale = known["tail"], known["scale"]
+            else:
+                raise ValueError(f"unknown series '{row.get('series')}'; pass a known series id or 'history'")
+            extra = [math.log1p(scale)]
+        else:
+            history = [float(v) for v in (row.get("history") or m["tail"])]
         if len(history) < need:
             raise ValueError(f"history needs at least {need} values, got {len(history)}")
-        values, forecast = list(history), []
+        values, forecast = [v / scale for v in history], []
         for _ in range(int(row.get("horizon") or 1)):  # recursive multi-step forecast
-            nxt = float(m["model"].predict([_features(values, m["lags"], m["windows"])])[0])
-            forecast.append(nxt)
+            nxt = float(m["model"].predict([_features(values, m["lags"], m["windows"]) + extra])[0])
+            forecast.append(nxt * scale)
             values.append(nxt)
-        out.append({"prediction": forecast})
+        out.append({"prediction": forecast} | ({"series": str(row["series"])} if row.get("series") is not None else {}))
     return out

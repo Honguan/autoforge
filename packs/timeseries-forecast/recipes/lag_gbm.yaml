@@ -5,7 +5,7 @@ entrypoint: trainers/forecast.py:train
 predictor: trainers/forecast.py
 requires: { device: cpu, min_ram_gb: 1 }
 good_for: One regular series (daily/hourly/weekly) with 100+ points; captures trend-free seasonality and recent momentum.
-avoid_when: Fewer than ~60 points, or many series that must share one model (planned global-model recipe).
+avoid_when: Fewer than ~60 points, or many related series (use global_lag_gbm).
 defaults: { time_column: date, lags: 14, windows: [3, 7], test_fraction: 0.2, learning_rate: 0.05,
             max_iter: 300, max_leaf_nodes: 31 }
 search_space:

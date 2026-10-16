@@ -46,13 +46,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Deep learning packs (text transformers, LLM LoRA/QLoRA, images). On Linux/Windows pip installs the CUDA build of torch.
+# Deep learning packs (text transformers, embeddings, LLM LoRA/QLoRA/DPO, images, detection, segmentation,
+# speech, diffusion LoRA). On Linux/Windows pip installs the CUDA build of torch.
 deep = ["torch>=2.3", "torchvision>=0.18", "transformers>=4.45", "peft>=0.12", "accelerate>=0.30", "timm>=1.0",
-        "pillow>=10.0", "nvidia-ml-py>=12.0"]
+        "pillow>=10.0", "nvidia-ml-py>=12.0", "diffusers>=0.30", "soundfile>=0.12"]
+rl = ["stable-baselines3>=2.3", "gymnasium>=0.29"]
 gpu = ["torch>=2.3", "nvidia-ml-py>=12.0"]
 anthropic = ["anthropic>=1.14,<2"]
 onnx = ["skl2onnx>=1.17", "onnxruntime>=1.18", "onnx>=1.16", "onnxscript>=0.1"]
-all = ["autoforge-trainer[deep,anthropic,onnx]"]
+all = ["autoforge-trainer[deep,rl,anthropic,onnx]"]
 hpo = []  # kept for compatibility: optuna is now a core dependency
 dev = ["pytest>=8.0", "playwright>=1.45", "build>=1.2", "twine>=5.0"]
 

@@ -171,3 +171,11 @@ def test_cli_hpo_wait(toy, tmp_path):
     r = CliRunner().invoke(app, ["hpo", "start", str(p), "-m", "score", "-n", "3", "--wait"])
     assert r.exit_code == 0, r.output
     assert "trial 0 (baseline)" in r.output and "best params" in r.output
+
+
+@pytest.mark.parametrize("metric,direction", [
+    ("wer", "minimize"), ("val_cer", "minimize"), ("wape", "minimize"), ("mape", "minimize"), ("val_loss", "minimize"),
+    ("map50", "maximize"), ("miou", "maximize"), ("recall_at_k", "maximize"), ("lower_bound", "maximize"),
+    ("mean_reward", "maximize"), ("reward_accuracy", "maximize")])
+def test_infer_direction(metric, direction):
+    assert hpo.infer_direction(metric) == direction

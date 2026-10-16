@@ -34,7 +34,7 @@ jobs:
       - name: Install (CPU torch + every extra)
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install -e ".[dev,deep,anthropic,onnx]"
+          pip install -e ".[dev,deep,rl,anthropic,onnx]"
           python -m playwright install --with-deps chromium
       - run: pytest -q
   package:

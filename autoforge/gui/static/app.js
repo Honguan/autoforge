@@ -103,6 +103,14 @@ const TASKS = {
   "timeseries-forecast": { zh: "時間序列預測", target: "必填", metric: "mae", inM: "series", outM: "values" },
   "anomaly-detection": { zh: "異常偵測", target: "選填", metric: "f1", inM: "tabular", outM: "flag" },
   "llm-sft": { zh: "LLM 微調", target: "無", metric: "val_loss", inM: "text", outM: "text" },
+  "llm-preference": { zh: "LLM 偏好對齊（DPO）", target: "無", metric: "reward_accuracy", inM: "text", outM: "text" },
+  "object-detection": { zh: "物件偵測（資料夾）", target: "無", metric: "map50", inM: "image", outM: "boxes" },
+  "image-segmentation": { zh: "影像分割（資料夾）", target: "無", metric: "miou", inM: "image", outM: "mask" },
+  "text-embedding": { zh: "Embedding 微調", target: "無", metric: "recall_at_1", inM: "text", outM: "vector" },
+  "speech-to-text": { zh: "語音辨識（Whisper）", target: "無", metric: "wer", inM: "audio", outM: "text" },
+  "text-to-image": { zh: "圖像生成 LoRA（資料夾）", target: "無", metric: "val_loss", inM: "text", outM: "image" },
+  "reinforcement-learning": { zh: "強化學習（環境設定檔）", target: "無", metric: "mean_reward", inM: "environment", outM: "action" },
+  "recommendation": { zh: "推薦系統", target: "選填", metric: "recall_at_k", inM: "interactions", outM: "items" },
 };
 const taskInfo = (t) => TASKS[t] || { zh: t, target: "選填", metric: "score", inM: "data", outM: "prediction" };
 

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import secrets
 import sys
 import time
@@ -38,6 +39,7 @@ from autoforge.policy.privacy import brain_from_actor
 from autoforge.schemas.core import BrainKind, RunStatus, TrainingPlan
 
 MINIMIZE_HINTS = ("loss", "rmse", "mse", "mae", "error", "perplexity")
+MINIMIZE_WORDS = {"wer", "cer", "mape", "wape", "smape"}  # whole words only: "wer" must not match "lower"
 
 
 class StudyNotFound(AutoForgeError):
@@ -92,7 +94,9 @@ def studies_dir() -> Path:
 
 
 def infer_direction(metric: str) -> str:
-    return "minimize" if any(h in metric.lower() for h in MINIMIZE_HINTS) else "maximize"
+    name = metric.lower()
+    words = set(re.split(r"[^a-z0-9]+", name))
+    return "minimize" if any(h in name for h in MINIMIZE_HINTS) or words & MINIMIZE_WORDS else "maximize"
 
 
 def _validate_space(space: dict[str, Any]) -> list[str]:
