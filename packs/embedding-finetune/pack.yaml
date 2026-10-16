@@ -1,0 +1,10 @@
+name: embedding-finetune
+version: 0.1.0
+summary: Fine-tune a sentence-embedding model on your own (query, relevant passage) pairs for better search, retrieval and RAG.
+tasks: [text-embedding]
+recipes: [contrastive_pairs]
+dependencies: [torch>=2.3, transformers>=4.45, pandas>=2.0]
+# ONNX export also needs: onnx, onnxscript
+authors: [AutoForge]
+license: MIT
+min_autoforge: 1.0.0

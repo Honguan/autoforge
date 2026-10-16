@@ -1,0 +1,9 @@
+name: speech-recognition
+version: 0.1.0
+summary: Fine-tune OpenAI Whisper to transcribe your own recordings (accents, domain words, a language) from audio + transcript pairs.
+tasks: [speech-to-text]
+recipes: [whisper_finetune]
+dependencies: [torch>=2.3, transformers>=4.45, pandas>=2.0, soundfile>=0.12, scipy>=1.10]
+authors: [AutoForge]
+license: MIT
+min_autoforge: 1.0.0
