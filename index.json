@@ -152,10 +152,10 @@
     },
     {
       "name": "llm-finetune",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "summary": "Fine-tune an open LLM on your instructions/chats with LoRA or QLoRA (4-bit) on one NVIDIA GPU.",
       "source": "github:Honguan/autoforge/packs/llm-finetune",
-      "commit_sha": "68e6432882bf7c1d16a8c54984edde24c9f4c42a",
+      "commit_sha": "14a0e443f6d30266048b1eafb35f348bacfc8f3f",
       "tasks": [
         "llm-sft"
       ],
@@ -176,17 +176,17 @@
             "llm-sft"
           ],
           "device": "cuda",
-          "min_vram_gb": 8.0,
+          "min_vram_gb": 6.0,
           "good_for": "Teach a 0.5B–8B open model a style, format or domain from 200+ prompt/response pairs; QLoRA fits 7–8B in 8–12 GB VRAM."
         }
       ]
     },
     {
       "name": "llm-preference",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "summary": "Align an open LLM with chosen/rejected answer pairs using Direct Preference Optimization (DPO) on a LoRA/QLoRA adapter.",
       "source": "github:Honguan/autoforge/packs/llm-preference",
-      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "commit_sha": "14a0e443f6d30266048b1eafb35f348bacfc8f3f",
       "tasks": [
         "llm-preference"
       ],
@@ -207,7 +207,7 @@
             "llm-preference"
           ],
           "device": "cuda",
-          "min_vram_gb": 8.0,
+          "min_vram_gb": 6.0,
           "good_for": "Make a 0.5B–8B instruct model prefer one kind of answer over another (tone, safety, conciseness, format) from 300+ prompt/chosen/rejected pairs; optionally on top of an llm-finetune (SFT) adapter."
         }
       ]
@@ -382,10 +382,10 @@
     },
     {
       "name": "text-classification",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "summary": "Classify text (sentiment, intent, topic, spam...) from a CSV with a text column and a label column.",
       "source": "github:Honguan/autoforge/packs/text-classification",
-      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "commit_sha": "14a0e443f6d30266048b1eafb35f348bacfc8f3f",
       "tasks": [
         "text-classification"
       ],
