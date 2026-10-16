@@ -7,7 +7,7 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> **1.0.2** · 文件網站：<https://honguan.github.io/autoforge/> · [變更紀錄](CHANGELOG.md)
+> **1.1.0** · 文件網站：<https://honguan.github.io/autoforge/> · [變更紀錄](CHANGELOG.md)
 
 ## 安裝與第一次使用
 

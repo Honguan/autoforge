@@ -18,7 +18,9 @@ from autoforge.serve.mcp_server import build_server
 
 REPO = Path(__file__).resolve().parents[1]
 PACKS = ["tabular-classic", "text-classification", "llm-finetune", "image-classification",
-         "timeseries-forecast", "anomaly-detection"]
+         "timeseries-forecast", "anomaly-detection", "object-detection", "image-segmentation",
+         "embedding-finetune", "speech-recognition", "llm-preference", "diffusion-lora",
+         "reinforcement-learning", "recommendation"]
 
 
 @pytest.mark.parametrize("name", PACKS)
@@ -151,3 +153,53 @@ def test_pack_smoke_tests_pass(name):
     res = test_pack(REPO / "packs" / name, timeout=600)
     assert res["ok"], "\n".join(res["output_tail"])
     assert res["passed"] + res["skipped"] >= 1  # deep-learning packs skip when torch is not installed
+
+
+def test_global_forecast_end_to_end(tmp_path):
+    pd = pytest.importorskip("pandas")
+    installer.install(str(REPO / "packs" / "timeseries-forecast"))
+    rows = [{"date": d, "store": s, "sales": lvl * (1 + 0.3 * math.sin(2 * math.pi * i / 7))}
+            for s, lvl in [("a", 10), ("b", 500)] for i, d in enumerate(pd.date_range("2025-01-01", periods=120))]
+    data = tmp_path / "stores.csv"
+    pd.DataFrame(rows).to_csv(data, index=False)
+    plan = TrainingPlan(task=TaskSpec(task_type="timeseries-forecast", input_modality="series", output_modality="values",
+                                      target="sales", metric="mae"), data_path=str(data),
+                        pack="timeseries-forecast", recipe="global_lag_gbm", hyperparameters={"series_column": "store"})
+    run_id, v = _run(plan)
+    assert v.metrics["n_series"] == 2
+    reg.register(run_id, "stores")
+    out = reg.predict("stores", [{"series": "b", "horizon": 2}])["predictions"][0]
+    assert out["series"] == "b" and 300 < out["prediction"][0] < 700
+
+
+def test_recommendation_end_to_end(tmp_path):
+    pd = pytest.importorskip("pandas")
+    pytest.importorskip("scipy")
+    installer.install(str(REPO / "packs" / "recommendation"))
+    rows = [{"user_id": f"u{u}", "item_id": f"i{(u % 3) * 10 + k}"} for u in range(45) for k in range(6)]
+    data = tmp_path / "clicks.csv"
+    pd.DataFrame(rows).to_csv(data, index=False)
+    plan = TrainingPlan(task=TaskSpec(task_type="recommendation", input_modality="interactions", output_modality="items",
+                                      metric="recall_at_k"), data_path=str(data), pack="recommendation", recipe="item_knn")
+    run_id, v = _run(plan)
+    assert 0 <= v.metrics["recall_at_k"] <= 1
+    reg.register(run_id, "recs")
+    known, cold = reg.predict("recs", [{"user": "u0", "k": 3}, {"user": "stranger", "k": 3}])["predictions"]
+    assert len(known["prediction"]) == 3 and cold["cold_start"] is True
+
+
+def test_reinforcement_learning_end_to_end(tmp_path):
+    pytest.importorskip("stable_baselines3")
+    pytest.importorskip("gymnasium")
+    installer.install(str(REPO / "packs" / "reinforcement-learning"))
+    env = tmp_path / "cartpole.yaml"
+    env.write_text("env_id: CartPole-v1\n")
+    plan = TrainingPlan(task=TaskSpec(task_type="reinforcement-learning", input_modality="environment",
+                                      output_modality="action", metric="mean_reward"),
+                        data_path=str(env), pack="reinforcement-learning", recipe="sb3",
+                        hyperparameters={"total_timesteps": 2048, "eval_every_steps": 1024, "eval_episodes": 3})
+    run_id, v = _run(plan)
+    assert v.metrics["mean_reward"] > 0
+    reg.register(run_id, "cartpole")
+    pred = reg.predict("cartpole", [{"observation": [0.0, 0.0, 0.0, 0.0]}])["predictions"][0]
+    assert pred["prediction"] in (0, 1)

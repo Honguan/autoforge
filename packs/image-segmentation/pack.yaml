@@ -1,0 +1,10 @@
+name: image-segmentation
+version: 0.1.0
+summary: Label every pixel of an image (semantic segmentation) by fine-tuning a torchvision LR-ASPP / DeepLabV3 model.
+tasks: [image-segmentation]
+recipes: [torchvision_segmenter]
+dependencies: [torch>=2.3, torchvision>=0.18, pillow>=10.0, numpy>=1.24]
+# ONNX export also needs: onnx, onnxscript
+authors: [AutoForge]
+license: MIT
+min_autoforge: 1.0.0

@@ -1,5 +1,28 @@
 # 變更紀錄
 
+## 1.1.0 — 2026-10
+
+### 新方法包（P7 第二批）
+- `object-detection`：物件偵測，torchvision Faster R-CNN 微調，支援 CSV 或 COCO 標註，評估 mAP@0.5。
+- `image-segmentation`：影像分割，LR-ASPP / DeepLabV3，評估 mIoU，可匯出 ONNX。
+- `embedding-finetune`：文字向量微調（搜尋、RAG），對比學習，報告微調前後的 recall@1，可匯出 ONNX。
+- `speech-recognition`：Whisper 語音辨識微調，報告微調前後的 WER / CER。
+- `llm-preference`：LLM 偏好對齊（DPO + LoRA / QLoRA），可從 `llm-finetune` 的結果接著訓練。
+- `diffusion-lora`：Stable Diffusion 1.x/2.x 的 UNet LoRA，生成的圖片在網頁介面直接顯示。
+- `reinforcement-learning`：stable-baselines3（PPO / A2C / DQN / SAC），環境可用 Gymnasium 名稱或自己寫的 `make_env()`。
+- `recommendation`：推薦系統，隱式回饋 ALS 和 Item-KNN，和熱門排行的基準比較。
+- `timeseries-forecast` 0.2.0：新增 `global_lag_gbm`，多條序列共用一個模型。
+
+### 核心
+- 安裝方法包時檢查 `min_autoforge`，版本太舊會回 `PACK_NEEDS_NEWER_AUTOFORGE`。
+- 模型輸入新增 `audio` 類型（REST、MCP、網頁介面）。
+- 自動調參能判斷 WER、CER、MAPE、WAPE 是越低越好。
+- `ctx.check_updates()` 只在控制檔變動時才讀檔，每一步呼叫也沒有負擔。
+- 新的安裝選項 `[rl]`；`[deep]` 加上 diffusers、soundfile。
+
+### 已知限制
+- 新的 GPU 方法（偵測、分割、Whisper、DPO、Diffusion LoRA）只用極小模型在 CPU 上驗證過流程，尚未在真的 NVIDIA GPU 上跑過。
+
 ## 1.0.2 — 2026-10
 
 - **PyPI 套件名稱改為 `autoforge-trainer`**：`autoforge-ml` 在我們發佈前被別人註冊了。指令和 `import autoforge` 都不變。1.0.1 沒有上傳到 PyPI。

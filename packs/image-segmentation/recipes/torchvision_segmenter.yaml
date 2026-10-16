@@ -1,0 +1,17 @@
+id: torchvision_segmenter
+name: Fine-tune a torchvision semantic segmentation model
+task_types: [image-segmentation]
+entrypoint: trainers/segmenter.py:train
+predictor: trainers/segmenter.py
+exporters:
+  onnx: trainers/segmenter.py:export_onnx
+requires: { device: any, min_ram_gb: 4 }
+good_for: Pixel masks of regions (defect areas, crop/weed, road/sky, tissue types, water/land); 50+ annotated images; lraspp_mobilenet_v3_large runs on CPU, DeepLabV3 wants a GPU.
+avoid_when: You only need boxes or counts (object-detection), one label per image (image-classification), or separate instances of touching objects (instance segmentation, not supported).
+defaults: { model_name: lraspp_mobilenet_v3_large, pretrained: true, image_size: 320, epochs: 15, batch_size: 8,
+            learning_rate: 0.0005, weight_decay: 0.0001, ignore_index: 255, val_fraction: 0.2, hflip: true }
+search_space:
+  learning_rate: { type: float, low: 0.0001, high: 0.003, log: true }
+  epochs: { type: int, low: 10, high: 50 }
+  image_size: { choices: [256, 320, 384, 512] }
+  model_name: { choices: [lraspp_mobilenet_v3_large, deeplabv3_mobilenet_v3_large, deeplabv3_resnet50] }
