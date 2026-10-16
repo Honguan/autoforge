@@ -1,0 +1,9 @@
+name: recommendation
+version: 0.1.0
+summary: Recommend items to users from an interaction log (purchases, clicks, ratings) with implicit ALS or item-kNN.
+tasks: [recommendation]
+recipes: [implicit_als, item_knn]
+dependencies: [numpy>=1.24, scipy>=1.10, pandas>=2.0, joblib>=1.3]
+authors: [AutoForge]
+license: MIT
+min_autoforge: 1.0.0

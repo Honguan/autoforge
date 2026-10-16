@@ -1,0 +1,13 @@
+id: item_knn
+name: Item-item kNN (cosine similarity)
+task_types: [recommendation]
+entrypoint: trainers/recsys.py:train_knn
+predictor: trainers/recsys.py
+requires: { device: cpu, min_ram_gb: 2 }
+good_for: Fast, explainable "people who bought X also bought Y" baseline; strong on small or very sparse logs; no iterations to tune.
+avoid_when: Huge catalogs with very dense users (similarity matrix gets large) or you want latent tastes across item groups (use implicit_als).
+defaults: { user_col: user_id, item_col: item_id, weight_col: null, time_col: null, k: 10,
+            neighbors: 50, shrinkage: 10.0 }
+search_space:
+  neighbors: { type: int, low: 10, high: 300, log: true }
+  shrinkage: { type: float, low: 0.0, high: 100.0 }

@@ -1,0 +1,16 @@
+id: sb3
+name: Stable-Baselines3 (PPO / A2C / DQN / SAC)
+task_types: [reinforcement-learning]
+entrypoint: trainers/sb3_train.py:train
+predictor: trainers/sb3_train.py
+requires: { device: any, min_ram_gb: 2 }
+good_for: Control and decision problems with a simulator (Gymnasium env id or your own make_env() in a .py file); small MLP policies train faster on CPU than on GPU, use a GPU only for CnnPolicy on image observations.
+avoid_when: You only have a fixed log of past decisions and no simulator (offline RL / supervised learning instead), or the task is a plain prediction from a table.
+defaults: { algorithm: PPO, total_timesteps: 100000, learning_rate: 0.0003, n_envs: 4, gamma: 0.99,
+            policy: MlpPolicy, net_arch: [64, 64], eval_episodes: 10, eval_every_steps: 10000,
+            n_steps: 2048, batch_size: 64, ent_coef: 0.0, buffer_size: 100000, exploration_fraction: 0.1 }
+search_space:
+  learning_rate: { type: float, low: 0.00003, high: 0.003, log: true }
+  gamma: { type: float, low: 0.95, high: 0.999 }
+  n_steps: { choices: [256, 512, 1024, 2048] }
+  ent_coef: { type: float, low: 0.0, high: 0.02 }

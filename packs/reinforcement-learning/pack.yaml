@@ -1,0 +1,10 @@
+name: reinforcement-learning
+version: 0.1.0
+summary: Train an agent to act in a Gymnasium environment or your own simulator with Stable-Baselines3 (PPO, A2C, DQN, SAC).
+tasks: [reinforcement-learning]
+recipes: [sb3]
+dependencies: [stable-baselines3>=2.3, gymnasium>=0.29, torch>=2.3, pyyaml>=6.0]
+# Atari / MuJoCo / Box2D environments need their own extras, e.g. gymnasium[box2d], gymnasium[mujoco], ale-py
+authors: [AutoForge]
+license: MIT
+min_autoforge: 1.0.0

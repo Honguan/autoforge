@@ -1,0 +1,15 @@
+id: implicit_als
+name: Implicit-feedback ALS (matrix factorisation)
+task_types: [recommendation]
+entrypoint: trainers/recsys.py:train
+predictor: trainers/recsys.py
+requires: { device: cpu, min_ram_gb: 2 }
+good_for: Purchase / click / play logs (implicit feedback) with repeat users; learns taste factors, so it finds non-obvious items and similar items; up to ~1M users x 100k items on CPU.
+avoid_when: Most users have a single interaction (cold start) or you need to use user/item attributes (age, category, text); predicting an explicit star rating.
+defaults: { user_col: user_id, item_col: item_id, weight_col: null, time_col: null, k: 10,
+            factors: 64, regularization: 0.1, alpha: 10.0, iterations: 15 }
+search_space:
+  factors: { type: int, low: 16, high: 128 }
+  regularization: { type: float, low: 0.001, high: 10.0, log: true }
+  alpha: { type: float, low: 1.0, high: 100.0, log: true }
+  iterations: { type: int, low: 5, high: 30 }
