@@ -1,0 +1,9 @@
+name: diffusion-lora
+version: 0.1.0
+summary: Teach Stable Diffusion 1.x/2.x a subject or style from a folder of captioned images with a small UNet LoRA.
+tasks: [text-to-image]
+recipes: [sd_lora]
+dependencies: [torch>=2.3, diffusers>=0.30, transformers>=4.45, peft>=0.12, accelerate>=0.30, pillow>=10.0]
+authors: [AutoForge]
+license: MIT
+min_autoforge: 1.0.0

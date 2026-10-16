@@ -1,0 +1,10 @@
+name: llm-preference
+version: 0.1.0
+summary: Align an open LLM with chosen/rejected answer pairs using Direct Preference Optimization (DPO) on a LoRA/QLoRA adapter.
+tasks: [llm-preference]
+recipes: [dpo_lora]
+dependencies: [torch>=2.3, transformers>=4.45, peft>=0.12, accelerate>=0.30]
+# QLoRA (load_in_4bit: true) also needs bitsandbytes (Linux/Windows + CUDA)
+authors: [AutoForge]
+license: MIT
+min_autoforge: 1.0.0

@@ -1,0 +1,17 @@
+id: dpo_lora
+name: Direct Preference Optimization with LoRA / QLoRA
+task_types: [llm-preference]
+entrypoint: trainers/dpo.py:train
+predictor: trainers/dpo.py
+exporters:
+  merged: trainers/dpo.py:export_merged
+requires: { device: cuda, min_vram_gb: 8, min_ram_gb: 16 }
+good_for: Make a 0.5B–8B instruct model prefer one kind of answer over another (tone, safety, conciseness, format) from 300+ prompt/chosen/rejected pairs; optionally on top of an llm-finetune (SFT) adapter.
+avoid_when: You only have good answers and no rejected ones (use llm-finetune), or labels are fixed classes (use text-classification).
+defaults: { model_name: Qwen/Qwen2.5-0.5B-Instruct, init_adapter: null, load_in_4bit: false, lora_r: 16, lora_alpha: 32,
+            lora_dropout: 0.05, beta: 0.1, label_smoothing: 0.0, learning_rate: 0.00005, epochs: 1, batch_size: 2,
+            grad_accum: 8, max_length: 1024, max_prompt_length: 512, eval_fraction: 0.1 }
+search_space:
+  beta: { type: float, low: 0.02, high: 0.5, log: true }
+  learning_rate: { type: float, low: 0.000005, high: 0.0002, log: true }
+  epochs: { type: int, low: 1, high: 3 }

@@ -1,0 +1,16 @@
+id: sd_lora
+name: Stable Diffusion UNet LoRA (DreamBooth-style or captioned)
+task_types: [text-to-image]
+entrypoint: trainers/sd_lora.py:train
+predictor: trainers/sd_lora.py
+requires: { device: cuda, min_vram_gb: 8, min_ram_gb: 16 }
+good_for: A person, pet, product, character or art style from 5–50 images (instance_prompt with a rare token like "sks"), or a domain look from hundreds of captioned images; fits SD 1.5 at 512 px in 8 GB.
+avoid_when: You need SDXL/Flux quality, exact text in images, or pixel-accurate edits; or the images are not yours to use.
+defaults: { model_name: stable-diffusion-v1-5/stable-diffusion-v1-5, resolution: 512, epochs: 10, max_steps: 0,
+            batch_size: 1, grad_accum: 4, learning_rate: 0.0001, lora_r: 16, lora_alpha: 16, instance_prompt: null,
+            center_crop: true, random_flip: true, val_fraction: 0.1, mixed_precision: auto, gradient_checkpointing: false,
+            validation_prompt: null, num_validation_images: 2, num_inference_steps: 30, guidance_scale: 7.5, seed: 0 }
+search_space:
+  learning_rate: { type: float, low: 0.00002, high: 0.0005, log: true }
+  lora_r: { choices: [4, 8, 16, 32] }
+  epochs: { type: int, low: 5, high: 40 }
