@@ -30,6 +30,50 @@
       ]
     },
     {
+      "name": "diffusion-lora",
+      "version": "0.1.0",
+      "summary": "Teach Stable Diffusion 1.x/2.x a subject or style from a folder of captioned images with a small UNet LoRA.",
+      "source": "github:Honguan/autoforge/packs/diffusion-lora",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "tasks": [
+        "text-to-image"
+      ],
+      "tags": [],
+      "recipes": [
+        {
+          "id": "sd_lora",
+          "task_types": [
+            "text-to-image"
+          ],
+          "device": "cuda",
+          "min_vram_gb": 8.0,
+          "good_for": "A person, pet, product, character or art style from 5–50 images (instance_prompt with a rare token like \"sks\"), or a domain look from hundreds of captioned images; fits SD 1.5 at 512 px in 8 GB."
+        }
+      ]
+    },
+    {
+      "name": "embedding-finetune",
+      "version": "0.1.0",
+      "summary": "Fine-tune a sentence-embedding model on your own (query, relevant passage) pairs for better search, retrieval and RAG.",
+      "source": "github:Honguan/autoforge/packs/embedding-finetune",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "tasks": [
+        "text-embedding"
+      ],
+      "tags": [],
+      "recipes": [
+        {
+          "id": "contrastive_pairs",
+          "task_types": [
+            "text-embedding"
+          ],
+          "device": "any",
+          "min_vram_gb": 0.0,
+          "good_for": "Domain search / RAG retrieval / FAQ matching from 500+ (query, relevant passage) pairs; MiniLM trains on CPU in minutes, larger encoders want a GPU."
+        }
+      ]
+    },
+    {
       "name": "image-classification",
       "version": "0.1.0",
       "summary": "Classify images into categories by fine-tuning a pretrained timm CNN/ViT (folder-per-class data).",
@@ -54,6 +98,28 @@
           "device": "any",
           "min_vram_gb": 0.0,
           "good_for": "Product photos, defects, documents, medical-style categories; 50+ images per class; GPU strongly recommended, small models run on CPU."
+        }
+      ]
+    },
+    {
+      "name": "image-segmentation",
+      "version": "0.1.0",
+      "summary": "Label every pixel of an image (semantic segmentation) by fine-tuning a torchvision LR-ASPP / DeepLabV3 model.",
+      "source": "github:Honguan/autoforge/packs/image-segmentation",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "tasks": [
+        "image-segmentation"
+      ],
+      "tags": [],
+      "recipes": [
+        {
+          "id": "torchvision_segmenter",
+          "task_types": [
+            "image-segmentation"
+          ],
+          "device": "any",
+          "min_vram_gb": 0.0,
+          "good_for": "Pixel masks of regions (defect areas, crop/weed, road/sky, tissue types, water/land); 50+ annotated images; lraspp_mobilenet_v3_large runs on CPU, DeepLabV3 wants a GPU."
         }
       ]
     },
@@ -83,6 +149,125 @@
           "device": "cuda",
           "min_vram_gb": 8.0,
           "good_for": "Teach a 0.5B–8B open model a style, format or domain from 200+ prompt/response pairs; QLoRA fits 7–8B in 8–12 GB VRAM."
+        }
+      ]
+    },
+    {
+      "name": "llm-preference",
+      "version": "0.1.0",
+      "summary": "Align an open LLM with chosen/rejected answer pairs using Direct Preference Optimization (DPO) on a LoRA/QLoRA adapter.",
+      "source": "github:Honguan/autoforge/packs/llm-preference",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "tasks": [
+        "llm-preference"
+      ],
+      "tags": [],
+      "recipes": [
+        {
+          "id": "dpo_lora",
+          "task_types": [
+            "llm-preference"
+          ],
+          "device": "cuda",
+          "min_vram_gb": 8.0,
+          "good_for": "Make a 0.5B–8B instruct model prefer one kind of answer over another (tone, safety, conciseness, format) from 300+ prompt/chosen/rejected pairs; optionally on top of an llm-finetune (SFT) adapter."
+        }
+      ]
+    },
+    {
+      "name": "object-detection",
+      "version": "0.1.0",
+      "summary": "Find and box objects in images by fine-tuning a torchvision Faster R-CNN (CSV or COCO annotations).",
+      "source": "github:Honguan/autoforge/packs/object-detection",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "tasks": [
+        "object-detection"
+      ],
+      "tags": [],
+      "recipes": [
+        {
+          "id": "torchvision_detector",
+          "task_types": [
+            "object-detection"
+          ],
+          "device": "any",
+          "min_vram_gb": 0.0,
+          "good_for": "Locating and counting objects (products on shelves, defects, vehicles, animals) with boxes; 100+ labelled boxes per class; COCO-pretrained so small datasets work; GPU recommended, the mobilenet model runs on CPU."
+        }
+      ]
+    },
+    {
+      "name": "recommendation",
+      "version": "0.1.0",
+      "summary": "Recommend items to users from an interaction log (purchases, clicks, ratings) with implicit ALS or item-kNN.",
+      "source": "github:Honguan/autoforge/packs/recommendation",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "tasks": [
+        "recommendation"
+      ],
+      "tags": [],
+      "recipes": [
+        {
+          "id": "implicit_als",
+          "task_types": [
+            "recommendation"
+          ],
+          "device": "cpu",
+          "min_vram_gb": 0.0,
+          "good_for": "Purchase / click / play logs (implicit feedback) with repeat users; learns taste factors, so it finds non-obvious items and similar items; up to ~1M users x 100k items on CPU."
+        },
+        {
+          "id": "item_knn",
+          "task_types": [
+            "recommendation"
+          ],
+          "device": "cpu",
+          "min_vram_gb": 0.0,
+          "good_for": "Fast, explainable \"people who bought X also bought Y\" baseline; strong on small or very sparse logs; no iterations to tune."
+        }
+      ]
+    },
+    {
+      "name": "reinforcement-learning",
+      "version": "0.1.0",
+      "summary": "Train an agent to act in a Gymnasium environment or your own simulator with Stable-Baselines3 (PPO, A2C, DQN, SAC).",
+      "source": "github:Honguan/autoforge/packs/reinforcement-learning",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "tasks": [
+        "reinforcement-learning"
+      ],
+      "tags": [],
+      "recipes": [
+        {
+          "id": "sb3",
+          "task_types": [
+            "reinforcement-learning"
+          ],
+          "device": "any",
+          "min_vram_gb": 0.0,
+          "good_for": "Control and decision problems with a simulator (Gymnasium env id or your own make_env() in a .py file); small MLP policies train faster on CPU than on GPU, use a GPU only for CnnPolicy on image observations."
+        }
+      ]
+    },
+    {
+      "name": "speech-recognition",
+      "version": "0.1.0",
+      "summary": "Fine-tune OpenAI Whisper to transcribe your own recordings (accents, domain words, a language) from audio + transcript pairs.",
+      "source": "github:Honguan/autoforge/packs/speech-recognition",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
+      "tasks": [
+        "speech-to-text"
+      ],
+      "tags": [],
+      "recipes": [
+        {
+          "id": "whisper_finetune",
+          "task_types": [
+            "speech-to-text"
+          ],
+          "device": "any",
+          "min_vram_gb": 0.0,
+          "good_for": "Improve transcription of accented speech, jargon, product names or a lower-resource language from 1+ hour of clips (<= 30 s) with exact transcripts; GPU strongly recommended (whisper-small needs ~8 GB VRAM), CPU only for whisper-tiny/base."
         }
       ]
     },
@@ -165,20 +350,14 @@
     },
     {
       "name": "timeseries-forecast",
-      "version": "0.1.0",
-      "summary": "Forecast the next values of a numeric time series (sales, demand, load, traffic) with lag features + gradient boosting.",
+      "version": "0.2.0",
+      "summary": "Forecast the next values of one or many numeric time series (sales, demand, load, traffic) with lag features + gradient boosting.",
       "source": "github:Honguan/autoforge/packs/timeseries-forecast",
-      "commit_sha": "cc99725ccd622a9eff2cb8634f4e6dcd1717f483",
+      "commit_sha": "ff2fc19fc8f55b02f1502003b9a8a0d1a132f977",
       "tasks": [
         "timeseries-forecast"
       ],
-      "tags": [
-        "timeseries",
-        "forecast",
-        "sales",
-        "demand",
-        "csv"
-      ],
+      "tags": [],
       "recipes": [
         {
           "id": "lag_gbm",
@@ -188,6 +367,15 @@
           "device": "cpu",
           "min_vram_gb": 0.0,
           "good_for": "One regular series (daily/hourly/weekly) with 100+ points; captures trend-free seasonality and recent momentum."
+        },
+        {
+          "id": "global_lag_gbm",
+          "task_types": [
+            "timeseries-forecast"
+          ],
+          "device": "cpu",
+          "min_vram_gb": 0.0,
+          "good_for": "Many related series in one CSV (sales per store/product, load per meter); short series borrow patterns from long ones."
         }
       ]
     }
