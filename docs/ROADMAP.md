@@ -27,6 +27,7 @@
 - **P9**：驗收結果：在乾淨的 `python:3.12-slim` 和 `python:3.11-slim` 容器（沒有 git）裡，`pip install` wheel 加上 `autoforge quickstart` 總共 63 秒。測試中發現沒有 git 就裝不了方法包，已改成沒有 git 時直接從 GitHub 下載 commit 的 tarball。CPU Docker 映像實測可以跑 quickstart 和 GUI。PyPI 名稱 `autoforge` 已被不相關的專案使用，`autoforge-ai` 又因為和既有的 `autoforgeai` 太相似被 PyPI 拒絕，`autoforge-ml` 則在發佈前被別人註冊，所以改用 `autoforge-trainer`（1.0.2 起）。正式發佈（PyPI、GHCR、GitHub Pages）需要做一次設定，見 docs/RELEASE.md。
 - **P8**：驗收結果：Playwright 用真的 Chromium 跑完上傳 → 選任務 → 選方法（從 GitHub 索引自動安裝）→ 訓練 → 註冊 → 預測 → 自動調參，過程中沒有 JavaScript 錯誤。AI 代理的對話介面已在 1.2.0 加進 GUI（「AI 助手」頁面，多輪對話、在頁面上同意訓練）。
 - **P7（第一批）**：新增 text-classification、llm-finetune（LoRA/QLoRA）、image-classification、timeseries-forecast、anomaly-detection，加上 tabular-classic 共 6 個方法包，每個都有 KNOWLEDGE.md 和煙霧測試。GPU 方法用極小模型在 CPU 上驗證過程式路徑，但尚未在真的 NVIDIA GPU 上跑過（QLoRA 的 4-bit 路徑只能在 GPU 驗證）。另有 `pack new` 骨架、`pack test`、MCP `pack_create`（AI 把 GitHub 專案轉成方法包）、GitHub Actions CI。
+- **GPU 驗證（1.4.0）**：`autoforge eval gpu` 讓有 NVIDIA GPU 的人一次驗證全部 GPU 方法包（真的訓練、量 VRAM 峰值）。還需要在真的 GPU 上跑一次並記錄結果。
 - **P7（第二批，1.1.0）**：新增 object-detection、image-segmentation、embedding-finetune、speech-recognition、llm-preference（DPO）、diffusion-lora、reinforcement-learning、recommendation 共 8 個方法包，timeseries-forecast 加上多序列共用模型，合計 14 個方法包。每個都有 KNOWLEDGE.md 和 CPU 冒煙測試（極小模型、合成資料）；推薦、強化學習、多序列預測另外跑過完整流程（訓練 → 註冊 → 預測）。GPU 路徑（混合精度、QLoRA、大模型）尚未在真的 NVIDIA GPU 上驗證。
 - **P6**：驗收結果：用 stdio MCP 客戶端（和 Claude Desktop 相同的連線方式）呼叫 `autoforge serve-mcp` 的 `predict_churn`，預測結果正確。每次訓練會保存方法包程式碼的快照，模型永遠用訓練它的那份程式碼來預測。
 - **P6**：LLM 類模型的 OpenAI 相容推論端點、GGUF 匯出，等 W2（LLM 微調方法包）時一起做。

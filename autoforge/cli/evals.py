@@ -56,3 +56,55 @@ def agent(
              f"{c['fail']} failed, {c['error']} errors — target {'met' if report['met_target'] else 'NOT met'}"
              f"\nreport: {report['report_dir']}/report.md")
     emit(as_json, report, human)
+
+
+GPU_MARK = {"pass": "✅", "fail": "❌", "skip": "⏭️", "error": "⚠️"}
+
+
+@eval_app.command("gpu")
+def gpu(
+    full: bool = typer.Option(False, "--full", help="Production-size models (QLoRA 1.5B, whisper-small, SD 1.5 at 512 px)."),
+    check: list[str] = typer.Option(None, "--check", "-c", help="Run only these check ids (repeatable)."),
+    packs_dir: str = typer.Option(None, "--packs-dir", help="Install packs from this folder (a repo checkout) instead of the index."),
+    timeout: float = typer.Option(3600, "--timeout", help="Seconds allowed per training run."),
+    list_checks: bool = typer.Option(False, "--list", help="List the checks and exit."),
+    device: str = typer.Option("cuda", "--device", hidden=True, help="cpu only to test this command itself."),
+    as_json: bool = typer.Option(False, "--json", help="Machine-readable report."),
+) -> None:
+    """Train each GPU pack for real on this NVIDIA GPU (small data), measure VRAM, register and predict.
+
+    quick (default): small real models, a few minutes per check. --full: the recipes' real sizes.
+    """
+    from pathlib import Path
+
+    from autoforge.evals.gpu_check import CHECKS, by_id, run_checks
+    from autoforge.hardware.detect import detect_hardware
+
+    if list_checks:
+        rows = [{"id": c.id, "pack": c.pack, "recipe": c.recipe, "note": c.note} for c in CHECKS]
+        emit(as_json, rows, "\n".join(f"{r['id']:22} {r['pack']}/{r['recipe']}  {r['note']}" for r in rows))
+        return
+    try:
+        selected = by_id(check)
+    except ValueError as e:
+        fail(as_json, "BAD_REQUEST", str(e))
+    if device == "cuda" and detect_hardware().best_device != "cuda":
+        fail(as_json, "NO_GPU", "no usable NVIDIA GPU with CUDA was found",
+             hint='run `autoforge doctor`; install the CUDA build of PyTorch: pip install "autoforge-trainer[deep]"')
+    if not as_json:
+        typer.echo(f"Checking {len(selected)} GPU pack(s), {'full' if full else 'quick'} tier "
+                   "(downloads pretrained models the first time).")
+
+    def progress(r) -> None:
+        if not as_json:
+            typer.echo(f"  {GPU_MARK[r.verdict]} {r.id:22} {r.seconds:6.0f} s  VRAM {r.peak_vram_gb:5.2f} GB  {r.reason}")
+
+    with errors_as_envelope(as_json):
+        report = run_checks(selected, "full" if full else "quick", device, Path(packs_dir).resolve() if packs_dir else None,
+                            timeout, on_progress=progress)
+    c = report["counts"]
+    human = (f"\n{c['pass']} passed, {c['fail']} failed, {c['error']} errors, {c['skip']} skipped"
+             f"\nreport: {report['report_dir']}/report.md")
+    emit(as_json, report, human)
+    if not report["all_passed"]:
+        raise typer.Exit(1)

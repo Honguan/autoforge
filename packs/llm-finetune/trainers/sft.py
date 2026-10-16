@@ -154,7 +154,7 @@ def train(ctx) -> dict:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 opt.step()
                 opt.zero_grad()
-                ctx.log_metric("train_loss", float(loss), step=step)
+                ctx.log_metric("train_loss", loss.item(), step=step)
                 step += 1
         vl = _val_loss(model, val, bs, tok.pad_token_id, device)
         ctx.log_metric("val_loss", vl, step=epoch)

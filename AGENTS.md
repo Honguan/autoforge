@@ -94,6 +94,7 @@ the CLI below offers the same operations with `--json`.
 - `hpo start | status | list | stop`, `run diagnose | adjust | compare`
 - `train "<goal>" --data <path> --brain <provider:model>` (built-in agent; see docs/AGENT.md)
 - `eval agent --brain <provider:model>` (score how well a brain chooses methods; nothing is trained)
+- `eval gpu [--full]` (train each GPU pack for real on this NVIDIA GPU; peak VRAM per pack; see docs/GPU.md)
 - `mcp` (MCP server over stdio), `data mark | list | profile`
 - `version`, `doctor`, `schema [Name]`
 - `plan validate`

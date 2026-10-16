@@ -1,5 +1,5 @@
 name: image-classification
-version: 0.1.0
+version: 0.1.1
 summary: Classify images into categories by fine-tuning a pretrained timm CNN/ViT (folder-per-class data).
 tasks: [image-classification]
 recipes: [timm_finetune]

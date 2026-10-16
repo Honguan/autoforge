@@ -32,6 +32,7 @@ nav:
       - 讓訂閱制 AI 操作（MCP）: MCP.md
       - 改進模型: IMPROVE.md
       - 部署模型: DEPLOY.md
+      - 在 GPU 上驗證: GPU.md
   - 開發:
       - 方法包格式: PACK_SPEC.md
       - 架構設計: ARCHITECTURE.md

@@ -1,5 +1,10 @@
 # 變更紀錄
 
+## 1.4.0 — 2026-10
+
+- **在 GPU 上驗證方法包**：`autoforge eval gpu [--full]`。10 個 GPU 方法包各用一小份容易學的資料，在 CUDA 上真的訓練（QLoRA 4-bit、混合精度、預訓練模型），一邊用 NVML 量 VRAM 峰值，再註冊並預測一次。報告列出每一項的結果、時間、VRAM 峰值和方法包宣告的最低 VRAM。說明見 docs/GPU.md。
+- image-classification 0.1.1、llm-finetune 0.1.1：記錄 train_loss 時改用 `loss.item()`，不再出現 PyTorch 警告。
+
 ## 1.3.0 — 2026-10
 
 - **評估 AI 選方法的準確度**：`autoforge eval agent --brain <大腦>`。13 個案例，每個是一句需求加一份當場產生的小資料，涵蓋表格、文字、圖片、物件偵測、時間序列、異常偵測、推薦、文字向量、LLM 微調和敏感資料。AI 要開始訓練時會被攔下並記錄計畫，不會真的訓練；結果分成 pass / partial / fail，報告存在 `~/.autoforge/evals/`。

@@ -114,7 +114,7 @@ def train(ctx) -> dict:
             opt.zero_grad()
             loss.backward()
             opt.step()
-            ctx.log_metric("train_loss", float(loss), step=step)
+            ctx.log_metric("train_loss", loss.item(), step=step)
             step += 1
         model.eval()
         total, correct, vloss = 0, 0, 0.0

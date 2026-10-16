@@ -119,3 +119,50 @@ def test_profile_shows_folder_files_and_jsonl_fields(tmp_path):
     j = profile(CASE["support-bot"].make_data(tmp_path / "b"), Access.summary)
     assert j["format"] == "jsonl" and j["records"] == 200 and set(j["fields"]) == {"prompt", "response"}
     assert "訂單" not in json.dumps(j, ensure_ascii=False)  # field names only, never values
+
+
+def test_gpu_check_harness_on_cpu(tmp_path, monkeypatch):
+    """The real checks need an NVIDIA GPU; on CPU we run the same harness with tiny settings."""
+    pytest.importorskip("torch")
+    pytest.importorskip("timm")
+    pytest.importorskip("PIL")
+    from autoforge.evals.gpu_check import by_id as gpu_by_id, run_checks
+
+    monkeypatch.setenv("AUTOFORGE_HOME", str(tmp_path / "real-home"))
+    tiny = {"image-classification": {"pretrained": False, "image_size": 32, "epochs": 1, "batch_size": 16}}
+    seen = []
+    report = run_checks(gpu_by_id(["image-classification", "llm-qlora"]), device="cpu", packs_dir=REPO / "packs",
+                        timeout=300, hp_override=tiny, on_progress=seen.append)
+    img, llm = report["checks"]
+    assert img["device"] == "cpu" and img["run_id"] and "accuracy" in img["metrics"], img
+    assert img["verdict"] in ("pass", "fail") and json.loads(img["prediction"])["prediction"] in ("red", "green", "blue")
+    # sft_lora needs CUDA: without a GPU the plan is refused (or bitsandbytes is missing) — reported, not crashed
+    assert llm["verdict"] in ("skip", "error") and llm["reason"]
+    out = Path(report["report_dir"])
+    assert out.parent.parent == tmp_path / "real-home" and "| image-classification |" in (out / "report.md").read_text()
+    assert [r.id for r in seen] == ["image-classification", "llm-qlora"]
+
+
+def test_gpu_check_data_generators(tmp_path):
+    pytest.importorskip("PIL")
+    pytest.importorskip("soundfile")
+    from autoforge.evals.gpu_check import CHECKS
+
+    for c in CHECKS:
+        p = c.make_data(tmp_path / c.id)
+        assert p.exists(), c.id
+        row = c.predict_row(tmp_path / c.id)
+        for v in row.values():
+            if isinstance(v, str) and v.startswith(str(tmp_path)):
+                assert Path(v).exists(), (c.id, v)
+
+
+def test_eval_gpu_refuses_without_gpu():
+    from autoforge.hardware.detect import detect_hardware
+
+    if detect_hardware().best_device == "cuda":
+        pytest.skip("this machine has a GPU")
+    r = CliRunner().invoke(app, ["eval", "gpu", "--json"])
+    assert r.exit_code != 0 and json.loads(r.stdout)["error"]["code"] == "NO_GPU"
+    r = CliRunner().invoke(app, ["eval", "gpu", "--list", "--json"])
+    assert r.exit_code == 0 and len(json.loads(r.stdout)["data"]) == 10
