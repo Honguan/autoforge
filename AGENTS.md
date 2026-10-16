@@ -93,6 +93,7 @@ the CLI below offers the same operations with `--json`.
 - `model register | list | info | predict | export | import | remove`, `serve`, `serve-mcp`
 - `hpo start | status | list | stop`, `run diagnose | adjust | compare`
 - `train "<goal>" --data <path> --brain <provider:model>` (built-in agent; see docs/AGENT.md)
+- `eval agent --brain <provider:model>` (score how well a brain chooses methods; nothing is trained)
 - `mcp` (MCP server over stdio), `data mark | list | profile`
 - `version`, `doctor`, `schema [Name]`
 - `plan validate`

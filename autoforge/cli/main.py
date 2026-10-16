@@ -10,6 +10,7 @@ from autoforge.cli.output import JsonOpt, emit, fail
 from autoforge.cli.packs import index_app, pack_app
 from autoforge.cli.agent import train
 from autoforge.cli.data import data_app
+from autoforge.cli.evals import eval_app
 from autoforge.cli.hpo import hpo_app
 from autoforge.cli.models import gui, model_app, serve, serve_mcp
 from autoforge.cli.quickstart import quickstart
@@ -29,6 +30,7 @@ app.add_typer(run_app, name="run")
 app.add_typer(data_app, name="data")
 app.add_typer(hpo_app, name="hpo")
 app.add_typer(model_app, name="model")
+app.add_typer(eval_app, name="eval")
 app.command()(serve)
 app.command("serve-mcp")(serve_mcp)
 app.command()(train)

@@ -73,3 +73,26 @@ autoforge train "…" --data … --brain ollama:qwen3 --yes --json
 ```
 
 回傳 `{"ok": true, "data": {"stop", "steps", "runs", "final_text", "transcript"}}`。`--json` 必須搭配 `--yes`。
+
+## 評估：AI 選方法選得對不對
+
+```bash
+autoforge eval agent --brain anthropic:claude-opus-5-5     # 13 個案例
+autoforge eval agent --brain ollama:qwen3 -c churn -c faq-search
+autoforge eval agent --list                                 # 看有哪些案例
+```
+
+每個案例是一句需求加上一份當場產生的小資料，例如「預測哪些客戶會流失」、「找出可疑交易（沒有標記）」、「在照片裡框出瓶子」、「用客服對話微調語言模型」。AI 照平常的流程檢查硬體、分析資料、找方法包、讀說明、寫計畫；**當它要開始訓練時，評估工具記下計畫並停住，不會真的訓練**，所以每個案例只花規劃的那幾輪。
+
+評分：
+
+| 結果 | 意思 |
+|---|---|
+| ✅ pass | 任務類型、方法包和方法、要預測的欄位都對 |
+| 🟡 partial | 方向對但不是最好的選擇（例如資料很少卻直接用 Transformer、多條序列卻一條一條做），或欄位選錯 |
+| ❌ fail | 任務類型錯、方法不適合、沒有提出計畫，或拿雲端模型去用敏感資料 |
+
+幾個案例專門測 AI 有沒有讀方法包的說明：有標記的詐騙資料應該訓練分類器，不是異常偵測；多家店的營收應該用多序列共用模型。另有一個標記為敏感的資料：雲端大腦必須在 `PRIVACY_DENIED` 停下來，本地大腦則照常規劃。
+
+目標是通過率至少 80%（路線圖 P4b 的「10 個案例至少 8 個」）。報告存在 `~/.autoforge/evals/<時間>/report.md`，每個案例的完整對話紀錄也在同一個資料夾。評估在暫時的資料夾裡進行，不會動到你自己的訓練紀錄。每個案例大約要 5–20 次模型呼叫，用雲端 API 會產生費用。
+

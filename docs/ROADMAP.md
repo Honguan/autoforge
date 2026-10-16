@@ -33,6 +33,6 @@
 - **P5**：驗收結果：churn 範例的 random_forest 調參 20 次後，f1_macro 從 0.679（基準）提升到 0.731。每個 trial 用同一份驗證資料打分再挑最佳，所以這個分數偏樂觀；保留測試集或交叉驗證列入後續評估工作（P6 前）。
 - **P5**：訓練中途改參數已完成（`run adjust` + `ctx.check_updates()`），需要訓練程式配合呼叫。
 - **P4b**：代理和 MCP 共用同一套工具（在同一個行程內透過 MCP 客戶端呼叫），沒有重複實作。Claude 用官方 SDK；OpenAI、Ollama、vLLM 等用 OpenAI 相容 API。
-- **P4b**：驗收標準「10 個案例中 ≥ 8 個選出合理方法」需要真的模型才能評估，列為 P5 前的評估工作（需要 API 金鑰或較大的本地模型）。
+- **P4b**：驗收標準「10 個案例中 ≥ 8 個選出合理方法」的評估工具已完成（1.3.0，`autoforge eval agent`，13 個案例，見 docs/AGENT.md）；需要用真的模型（API 金鑰或較大的本地模型）跑一次並記錄結果。
 - **P4a**：隱私守衛依 actor 判斷大腦類型（`ai:local:*` 視為本地模型）。MCP 路徑由伺服器設定的 actor 決定，AI 無法自行更改；CLI 則信任使用者宣告的 `--actor`。
 - **P4a**：Claude Desktop/Code 的實機連線待使用者驗證；自動化測試用同一個 MCP SDK 的 stdio 客戶端完成了完整流程。

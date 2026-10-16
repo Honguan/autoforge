@@ -76,6 +76,7 @@ def _profile_csv(path: Path, access: Access) -> dict:
 def _profile_dir(path: Path) -> dict:
     exts: Counter = Counter()
     subdirs = sorted(p.name for p in path.iterdir() if p.is_dir())
+    top_files = sorted(p.name for p in path.iterdir() if p.is_file())
     files = 0
     for p in path.rglob("*"):
         if p.is_file():
@@ -86,7 +87,31 @@ def _profile_dir(path: Path) -> dict:
         "files": files,
         "extensions": dict(exts.most_common(10)),
         "top_level_dirs": subdirs[:50],  # e.g. class folders in image datasets
+        "top_level_files": top_files[:30],  # e.g. annotations.csv, metadata.csv, classes.txt
     }
+
+
+def _profile_jsonl(path: Path) -> dict:
+    """Record count and field names only (no values): enough to tell chat / preference / pair data apart."""
+    import json
+
+    rows, keys, bad = 0, Counter(), 0
+    with path.open(encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            rows += 1
+            if rows > MAX_ROWS:
+                break
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                bad += 1
+                continue
+            if isinstance(rec, dict):
+                keys.update(rec.keys())
+    return {"format": "jsonl", "records": min(rows, MAX_ROWS), "fields": dict(keys.most_common(30)),
+            "invalid_lines": bad}
 
 
 def profile(path: str | Path, access: Access) -> dict:
@@ -96,4 +121,6 @@ def profile(path: str | Path, access: Access) -> dict:
         return base | _profile_dir(p)
     if p.suffix.lower() == ".csv":
         return base | _profile_csv(p, access)
+    if p.suffix.lower() == ".jsonl":
+        return base | _profile_jsonl(p)
     return base | {"format": p.suffix.lstrip(".") or "unknown", "bytes": p.stat().st_size}
