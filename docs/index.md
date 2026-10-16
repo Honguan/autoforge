@@ -14,9 +14,9 @@
 ## 安裝
 
 ```bash
-pip install autoforge-ai               # 表格、文字、時間序列、異常偵測（CPU 就能跑）
-pip install "autoforge-ai[deep]"       # 加上 Transformer、LLM 微調（LoRA/QLoRA）、圖片分類（NVIDIA GPU）
-pip install "autoforge-ai[all]"        # 再加上 Claude 代理和 ONNX 匯出
+pip install autoforge-ml               # 表格、文字、時間序列、異常偵測（CPU 就能跑）
+pip install "autoforge-ml[deep]"       # 加上 Transformer、LLM 微調（LoRA/QLoRA）、圖片分類（NVIDIA GPU）
+pip install "autoforge-ml[all]"        # 再加上 Claude 代理和 ONNX 匯出
 ```
 
 需要 Python 3.11 以上。GPU 只支援 NVIDIA（CUDA）。

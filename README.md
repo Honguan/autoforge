@@ -12,20 +12,20 @@
 ## 安裝與第一次使用
 
 ```bash
-pip install autoforge-ai          # 需要 Python 3.11 以上
+pip install autoforge-ml          # 需要 Python 3.11 以上
 autoforge quickstart              # 約 1 分鐘：檢查硬體 → 安裝方法包 → 訓練 → 註冊 → 預測
 autoforge gui                     # 網頁介面
 ```
 
 | 安裝方式 | 包含 |
 |---|---|
-| `pip install autoforge-ai` | 表格、文字（TF-IDF）、時間序列、異常偵測、自動調參、網頁介面、MCP、REST |
-| `pip install "autoforge-ai[deep]"` | 再加上 Transformer、LLM 微調（LoRA/QLoRA）、圖片分類（NVIDIA GPU） |
-| `pip install "autoforge-ai[all]"` | 再加上 Claude 代理、ONNX 匯出 |
+| `pip install autoforge-ml` | 表格、文字（TF-IDF）、時間序列、異常偵測、自動調參、網頁介面、MCP、REST |
+| `pip install "autoforge-ml[deep]"` | 再加上 Transformer、LLM 微調（LoRA/QLoRA）、圖片分類（NVIDIA GPU） |
+| `pip install "autoforge-ml[all]"` | 再加上 Claude 代理、ONNX 匯出 |
 | `docker run --rm -p 127.0.0.1:8800:8800 -v autoforge:/data ghcr.io/honguan/autoforge:cpu` | CPU 映像，預設啟動網頁介面 |
 | `docker run --rm --gpus all -p 127.0.0.1:8800:8800 -v autoforge:/data ghcr.io/honguan/autoforge:cuda` | NVIDIA CUDA 映像，所有方法包 |
 
-PyPI 上的 `autoforge` 是另一個不相關的專案，請安裝 **`autoforge-ai`**；裝好之後指令一樣是 `autoforge`。
+PyPI 上的 `autoforge` 是另一個不相關的專案（`autoforge-ai` 也因為和既有的 `autoforgeai` 太相似而無法註冊），請安裝 **`autoforge-ml`**；裝好之後指令一樣是 `autoforge`。
 
 操作方式：[網頁介面](docs/GUI.md) · [一句話訓練](docs/AGENT.md) · [讓訂閱制 AI 透過 MCP 操作](docs/MCP.md) · [改進模型](docs/IMPROVE.md) · [部署](docs/DEPLOY.md) · [架構](docs/ARCHITECTURE.md) · [路線圖](docs/ROADMAP.md)
 

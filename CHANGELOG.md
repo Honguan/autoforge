@@ -2,6 +2,7 @@
 
 ## 1.0.1 — 2026-10
 
+- **PyPI 套件名稱改為 `autoforge-ml`**：`autoforge-ai` 和 PyPI 上既有的 `autoforgeai` 太相似，無法註冊。指令和 `import autoforge` 都不變。
 - 修正：`run adjust` 的參數修改偶爾沒有寫進訓練資料夾的 git 紀錄（稽核紀錄不受影響）。原因是 `git add -A` 剛好碰到訓練程式寫檔時暫時產生的檔案；現在只加入需要保存版本的檔案。這個問題是 CI 發現的。
 
 ## 1.0.0 — 2026-10
