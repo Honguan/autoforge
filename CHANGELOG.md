@@ -4,6 +4,7 @@
 
 - **在 GPU 上驗證方法包**：`autoforge eval gpu [--full]`。10 個 GPU 方法包各用一小份容易學的資料，在 CUDA 上真的訓練（QLoRA 4-bit、混合精度、預訓練模型），一邊用 NVML 量 VRAM 峰值，再註冊並預測一次。報告列出每一項的結果、時間、VRAM 峰值和方法包宣告的最低 VRAM。說明見 docs/GPU.md。
 - image-classification 0.1.1、llm-finetune 0.1.1：記錄 train_loss 時改用 `loss.item()`，不再出現 PyTorch 警告。
+- `autoforge index add` 更新既有的方法包時，沒有給 `--tag` 就保留原本的搜尋標籤（之前會被清空）。索引裡每個方法包都補上了標籤，包括中文關鍵字（例如「推薦」「語音辨識」）。
 
 ## 1.3.0 — 2026-10
 

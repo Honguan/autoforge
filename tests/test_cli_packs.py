@@ -51,3 +51,13 @@ def test_index_add_validate_and_search(tmp_path, monkeypatch):
 def test_search_without_index_errors():
     code, body = call("pack", "search", "--offline")
     assert code == 1 and body["error"]["code"] == "INDEX_UNAVAILABLE"
+
+
+def test_index_add_keeps_tags_when_updating(tmp_path):
+    idx = tmp_path / "index.json"
+    args = ["index", "add", str(idx), str(EXAMPLE_PACK), "--source", "github:o/r/packs/tabular-classic"]
+    call(*args, "--commit", "a" * 40, "--tag", "csv", "--tag", "baseline")
+    code, body = call(*args, "--commit", "b" * 40)  # new commit, no --tag
+    assert code == 0 and body["data"]["tags"] == ["csv", "baseline"] and body["data"]["commit_sha"] == "b" * 40
+    code, body = call(*args, "--commit", "c" * 40, "--tag", "new")
+    assert body["data"]["tags"] == ["new"]

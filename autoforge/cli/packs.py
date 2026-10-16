@@ -128,7 +128,7 @@ def index_add(
     path: Path,
     source: str = typer.Option(...),
     commit: str = typer.Option(...),
-    tag: list[str] = typer.Option([], "--tag"),
+    tag: list[str] = typer.Option([], "--tag", help="Search tag; repeatable. Omit to keep the existing entry's tags."),
     as_json: bool = JsonOpt,
 ) -> None:
     """Add or replace a pack's entry in an index.json file."""
@@ -136,6 +136,9 @@ def index_add(
         pack = load_pack(path)
         index = parse_index(index_file.read_text(encoding="utf-8")) if index_file.exists() else PackIndex()
     entry = entry_from_pack(pack, source, commit, tag)
+    old = next((p for p in index.packs if p.name == entry.name), None)
+    if not tag and old is not None:  # updating a pack must not silently drop its search tags
+        entry.tags = list(old.tags)
     index.packs = sorted([p for p in index.packs if p.name != entry.name] + [entry], key=lambda p: p.name)
     index_file.write_text(dump_index(index), encoding="utf-8")
     emit(as_json, entry.model_dump(mode="json"), f"Wrote {entry.name} {entry.version} to {index_file}")
