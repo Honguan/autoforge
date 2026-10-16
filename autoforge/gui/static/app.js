@@ -477,7 +477,10 @@ async function pageModel(ref) {
       try {
         const out = await api("POST", `/api/models/${encodeURIComponent(c.name)}/predict`, { rows: [row] });
         const p = out.predictions[0];
-        fill(result, h("h3", {}, "預測結果：", h("span", { class: "mono", id: "prediction" }, typeof p.prediction === "object" ? JSON.stringify(p.prediction) : String(p.prediction))),
+        const isImg = typeof p.prediction === "string" && /^data:image\/(png|jpeg|webp);base64,/.test(p.prediction);
+        const text = typeof p.prediction === "object" ? JSON.stringify(p.prediction) : String(p.prediction);
+        fill(result, h("h3", {}, "預測結果：", isImg ? null : h("span", { class: "mono", id: "prediction" }, text.length > 600 ? text.slice(0, 600) + "…" : text)),
+          isImg ? h("img", { id: "prediction", src: p.prediction, alt: "預測結果", class: "pred-img" }) : null,
           p.probabilities ? h("div", {}, Object.entries(p.probabilities).sort((a, b) => b[1] - a[1]).map(([k, v]) => h("span", { class: "chip" }, `${k}: ${(v * 100).toFixed(1)}%`))) : null,
           p.score !== undefined ? h("p", {}, `分數：${fmt(p.score)}`) : null,
           out.warnings.length ? h("ul", { class: "warnings" }, out.warnings.map((w) => h("li", {}, w))) : null);

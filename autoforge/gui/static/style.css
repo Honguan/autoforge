@@ -81,3 +81,4 @@ details > summary { cursor: pointer; color: var(--accent); }
 .tablewrap td a { word-break: break-all; }
 .loading { color: var(--muted); padding: 20px 0; }
 .loading:not(:only-child) { display: none; }
+.pred-img { max-width: 100%; height: auto; border-radius: 6px; margin-top: 8px; }
