@@ -29,7 +29,7 @@ autoforge run diagnose <run_id>
 autoforge hpo start examples/churn_plan.yaml -m f1_macro -n 20 --wait
 ```
 
-- 使用 Optuna（`pip install "autoforge[hpo]"`），在背景執行。每個 trial 都是一般的 Run，所以有完整紀錄、日誌，也能暫停和停止。
+- 使用 Optuna（已內建），在背景執行。每個 trial 都是一般的 Run，所以有完整紀錄、日誌，也能暫停和停止。
 - **trial 0 一定用原計畫的超參數**，當作基準，最後會報告比基準好了多少。
 - 搜尋範圍預設用 recipe 的 `search_space`，也可以用 `--space space.yaml` 自訂。
 - 最佳化方向會依指標名稱自動判斷：名稱含 loss、rmse、error 的會取最小值，其他取最大值。也可以用 `--direction` 指定。

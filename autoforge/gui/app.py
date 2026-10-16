@@ -1,7 +1,8 @@
 """Local web GUI (P8): `autoforge gui`.
 
 A Starlette app serving a static single-page UI and a /api/* JSON API that calls the same
-core API as the CLI and MCP server (the GUI user acts as "human").
+core API as the CLI and MCP server (the GUI user acts as "human"). The AI assistant page
+(/api/agent/*, see agent_chat.py) runs the built-in agent, which acts as its own brain.
 
 Security (it can start training and run code on this machine):
 - binds to 127.0.0.1 by default;
@@ -12,9 +13,14 @@ Security (it can start training and run code on this machine):
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import hmac
+import json
+import os
 import re
 import secrets
+import urllib.request
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
@@ -27,7 +33,9 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from autoforge import __version__, api, config
+from autoforge.agents.providers import DEFAULT_BRAIN, BrainSpec, Provider, make_provider, parse_brain
 from autoforge.errors import AutoForgeError
+from autoforge.gui.agent_chat import ChatManager
 from autoforge.schemas.core import BrainKind
 
 ACTOR = "human"
@@ -35,7 +43,7 @@ BRAIN = BrainKind.human
 STATIC = Path(__file__).parent / "static"
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
 UPLOAD_MAX_BYTES = 500 * 1024 * 1024
-STATUS = {"NOT_FOUND": 404, "RUN_NOT_FOUND": 404, "MODEL_NOT_FOUND": 404, "STUDY_NOT_FOUND": 404,
+STATUS = {"CHAT_ERROR": 409, "NOT_FOUND": 404, "RUN_NOT_FOUND": 404, "MODEL_NOT_FOUND": 404, "STUDY_NOT_FOUND": 404,
           "PACK_NOT_FOUND": 404, "INVALID_INPUT": 422, "PLAN_INVALID": 422, "UNAUTHORIZED": 401}
 
 
@@ -197,6 +205,65 @@ async def model_export(r):
     return FileResponse(res["path"], filename=Path(res["path"]).name)
 
 
+# ---------------------------------------------------------------- AI agent chat
+
+def _ollama_models() -> list[str]:
+    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+    host = host if host.startswith("http") else "http://" + host
+    try:
+        with urllib.request.urlopen(f"{host}/api/tags", timeout=1) as resp:
+            return sorted(m["name"] for m in json.loads(resp.read()).get("models", []))
+    except (OSError, ValueError, KeyError):
+        return []
+
+
+async def agent_config(r):
+    return {"default_brain": os.environ.get("AUTOFORGE_BRAIN") or DEFAULT_BRAIN,
+            "keys": {"anthropic": bool(os.environ.get("ANTHROPIC_API_KEY")),
+                     "openai": bool(os.environ.get("OPENAI_API_KEY"))},
+            "ollama_models": await asyncio.to_thread(_ollama_models)}
+
+
+async def chats_list(r):
+    return r.app.state.chats.list()
+
+
+async def chat_create(r):
+    body = await _json(r)
+    spec = parse_brain(body.get("brain") or None, body.get("base_url") or None)
+    provider = r.app.state.provider_factory(spec)
+    return r.app.state.chats.create(spec, provider, int(body.get("max_steps") or 40)).summary()
+
+
+async def chat_detail(r):
+    return r.app.state.chats.get(r.path_params["chat_id"]).view(int(r.query_params.get("after", 0)))
+
+
+async def chat_message(r):
+    body = await _json(r)
+    chat = r.app.state.chats.get(r.path_params["chat_id"])
+    chat.send(str(body.get("text", "")), body.get("data_path") or None)
+    return chat.summary()
+
+
+async def chat_approval(r):
+    body = await _json(r)
+    chat = r.app.state.chats.get(r.path_params["chat_id"])
+    chat.answer(bool(body.get("approved")), str(body.get("feedback") or ""))
+    return chat.summary()
+
+
+async def chat_stop(r):
+    chat = r.app.state.chats.get(r.path_params["chat_id"])
+    chat.stop()
+    return chat.summary()
+
+
+async def chat_close(r):
+    r.app.state.chats.close(r.path_params["chat_id"])
+    return {"closed": r.path_params["chat_id"]}
+
+
 ROUTES = [
     ("GET", "/api/info", info), ("GET", "/api/hardware", hardware), ("GET", "/api/tasks", tasks),
     ("GET", "/api/data/profile", data_profile), ("GET", "/api/data/files", data_files),
@@ -213,10 +280,17 @@ ROUTES = [
     ("GET", "/api/models", models_list), ("POST", "/api/models", model_register),
     ("GET", "/api/models/{ref}", model_detail), ("POST", "/api/models/{ref}/predict", model_predict),
     ("GET", "/api/models/{ref}/export", model_export),
+    ("GET", "/api/agent/config", agent_config), ("GET", "/api/agent/chats", chats_list),
+    ("POST", "/api/agent/chats", chat_create), ("GET", "/api/agent/chats/{chat_id}", chat_detail),
+    ("POST", "/api/agent/chats/{chat_id}/messages", chat_message),
+    ("POST", "/api/agent/chats/{chat_id}/approval", chat_approval),
+    ("POST", "/api/agent/chats/{chat_id}/stop", chat_stop), ("DELETE", "/api/agent/chats/{chat_id}", chat_close),
 ]
 
 
-def create_app(token: str, check_host: bool = True) -> Starlette:
+def create_app(token: str, check_host: bool = True,
+               provider_factory: Callable[[BrainSpec], Provider] = make_provider) -> Starlette:
+    """`provider_factory` builds the agent's model client (tests pass a scripted fake)."""
     index_html = (STATIC / "index.html").read_text(encoding="utf-8")
 
     async def page(request: Request) -> Response:
@@ -240,4 +314,13 @@ def create_app(token: str, check_host: bool = True) -> Starlette:
 
     routes = [Route(path, endpoint(fn), methods=[method]) for method, path, fn in ROUTES]
     routes += [Route("/", page), Mount("/static", StaticFiles(directory=STATIC), name="static")]
-    return Starlette(routes=routes, middleware=[Middleware(Guard)])
+    chats = ChatManager()
+
+    @contextlib.asynccontextmanager
+    async def lifespan(app: Starlette):
+        yield
+        chats.close_all()
+
+    app = Starlette(routes=routes, middleware=[Middleware(Guard)], lifespan=lifespan)
+    app.state.chats, app.state.provider_factory = chats, provider_factory
+    return app

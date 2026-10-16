@@ -104,7 +104,7 @@ claude mcp add my-models -- autoforge serve-mcp
 
 ```bash
 autoforge model export churn                       # bundle：zip（模型 + 程式碼 + 模型卡）
-autoforge model export churn --format onnx         # ONNX（需要 pip install "autoforge[onnx]"）
+autoforge model export churn --format onnx         # ONNX（需要 pip install "autoforge-trainer[onnx]"）
 autoforge model import churn-v1.zip --name churn   # 在另一台電腦匯入，成為新版本
 ```
 

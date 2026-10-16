@@ -7,7 +7,7 @@
 - **方法包**：從 GitHub 安裝的「教學包」，AI 讀了就知道怎麼訓練
 - **隱私**：敏感資料只允許本地模型指揮
 
-> **1.1.0** · 文件網站：<https://honguan.github.io/autoforge/> · [變更紀錄](CHANGELOG.md)
+> **1.2.0** · 文件網站：<https://honguan.github.io/autoforge/> · [變更紀錄](CHANGELOG.md)
 
 ## 安裝與第一次使用
 
@@ -62,6 +62,7 @@ pytest -q
 
 ```bash
 autoforge gui      # 打開瀏覽器：上傳資料 → 選任務 → 選方法 → 訓練 → 調參 → 註冊 → 預測
+                   # 或在「AI 助手」頁面用一句話讓 AI 幫你做完（開始訓練前會先問你）
 ```
 
 ## 使用

@@ -85,35 +85,84 @@ class Transcript:
             f.write(json.dumps({"t": time.time(), "kind": kind, **data}, ensure_ascii=False, default=str) + "\n")
 
 
-async def run_agent(
-    goal: str,
-    provider: Provider,
-    actor: str,
-    brain: BrainKind,
-    approve: ApproveFn | None = None,
-    on_event: EventFn | None = None,
-    max_steps: int = 40,
-    data_path: str | None = None,
-) -> AgentResult:
-    emit = on_event or (lambda e: None)
-    transcript = Transcript()
-    runs: list[str] = []
-    server = build_server(actor, log_level="WARNING")  # the agent reports tool errors itself
+def describe_call(call: ToolCall) -> str:
+    """Plain-text summary of a gated call (what training would start), shown before asking the person."""
+    if call.name == "run_retry":
+        return f"retry run {call.arguments.get('run_id')}"
+    if call.name == "hpo_start":
+        a = call.arguments
+        head = (f"  hyperparameter search: {a.get('n_trials', 10)} trials, optimise {a.get('metric')}"
+                f" ({a.get('direction') or 'auto direction'})\n")
+        return head + describe_call(ToolCall(call.id, "run_start", {"plan": a.get("plan")}))
+    plan = call.arguments.get("plan") or {}
+    task = plan.get("task") or {}
+    method = (f"{plan.get('pack')} / {plan.get('recipe')}" if plan.get("pack")
+              else f"custom code {plan.get('custom_code_path')}")
+    lines = [
+        f"  task:            {task.get('task_type')} (target: {task.get('target')}, metric: {task.get('metric')})",
+        f"  data:            {plan.get('data_path')}",
+        f"  method:          {method}",
+        f"  device:          {plan.get('device', 'auto')}",
+        f"  hyperparameters: {json.dumps(plan.get('hyperparameters') or {}, ensure_ascii=False)}",
+    ]
+    return "\n".join(lines)
 
-    user_msg = goal
-    if data_path:
-        user_msg += f"\n\nData: {Path(data_path).expanduser().resolve()}"
-    transcript.write("start", goal=goal, actor=actor, brain=brain.value, data_path=data_path)
 
-    async with Client(server) as mcp:
-        listed = await mcp.list_tools()
+
+class AgentSession:
+    """A conversation with the agent: enter once, `send()` each user message, exit at the end.
+
+    The MCP tools stay connected between messages and the provider keeps the whole history, so a
+    follow-up like "now tune it" builds on what the agent already did. `should_stop` is checked
+    between model turns (the GUI's stop button); a stopped turn ends with stop="stopped".
+    """
+
+    def __init__(self, provider: Provider, actor: str, brain: BrainKind, approve: ApproveFn | None = None,
+                 on_event: EventFn | None = None, max_steps: int = 40,
+                 should_stop: Callable[[], bool] | None = None, origin: str | None = None):
+        self.provider, self.actor, self.brain = provider, actor, brain
+        self.approve, self.max_steps = approve, max_steps
+        self.emit = on_event or (lambda e: None)
+        self.should_stop = should_stop or (lambda: False)
+        self.origin = origin
+        self.runs: list[str] = []
+        self.transcript: Transcript | None = None
+        self._client: Client | None = None
+
+    async def __aenter__(self) -> "AgentSession":
+        self.transcript = Transcript()
+        self.transcript.write("start", actor=self.actor, brain=self.brain.value, origin=self.origin)
+        server = build_server(self.actor, log_level="WARNING")  # the agent reports tool errors itself
+        self._client = Client(server)
+        await self._client.__aenter__()
+        listed = await self._client.list_tools()
         tools = [ToolSpec(t.name, t.description or "", t.input_schema) for t in listed.tools]
-        provider.start(SYSTEM_PROMPT.format(instructions=INSTRUCTIONS), tools)
-        provider.add_user(user_msg)
+        self.provider.start(SYSTEM_PROMPT.format(instructions=INSTRUCTIONS), tools)
+        return self
 
-        final_text, stop = "", "max_steps"
-        for step in range(1, max_steps + 1):
-            turn = await provider.complete()
+    async def __aexit__(self, *exc: Any) -> None:
+        if self._client is not None:
+            await self._client.__aexit__(*exc)
+            self._client = None
+        if self.transcript:
+            self.transcript.write("close", runs=self.runs)
+
+    async def send(self, text: str, data_path: str | None = None) -> AgentResult:
+        """One user message → model turns and tool calls until the model answers (or a limit is hit)."""
+        assert self._client is not None and self.transcript is not None, "use `async with AgentSession(...)`"
+        mcp, transcript, emit = self._client, self.transcript, self.emit
+        user_msg = text + (f"\n\nData: {Path(data_path).expanduser().resolve()}" if data_path else "")
+        transcript.write("user", text=text, data_path=data_path)
+        self.provider.add_user(user_msg)
+        runs: list[str] = []
+
+        final_text, stop, step = "", "max_steps", 0
+        for step in range(1, self.max_steps + 1):
+            if self.should_stop():
+                stop = "stopped"
+                emit(AgentEvent("info", {"message": "stopped by the user"}))
+                break
+            turn = await self.provider.complete()
             if turn.text:
                 final_text = turn.text
                 emit(AgentEvent("text", {"text": turn.text}))
@@ -136,8 +185,8 @@ async def run_agent(
                     content = json.dumps({"ok": False, "error": {"code": "BAD_TOOL_CALL", "message": call.parse_error}})
                     results.append(ToolResult(call.id, content, is_error=True))
                     continue
-                if call.name in GATED_TOOLS and approve is not None:
-                    ok, feedback = await approve(call)
+                if call.name in GATED_TOOLS and self.approve is not None:
+                    ok, feedback = await self.approve(call)
                     emit(AgentEvent("approval", {"name": call.name, "approved": ok, "feedback": feedback}))
                     transcript.write("approval", name=call.name, approved=ok, feedback=feedback)
                     if not ok:
@@ -148,21 +197,49 @@ async def run_agent(
                 res = await mcp.call_tool(call.name, call.arguments)
                 envelope = res.structured_content
                 if envelope is None:  # unstructured (e.g. argument validation error from the MCP layer)
-                    text = "\n".join(getattr(c, "text", "") for c in res.content)
-                    envelope = {"ok": False, "error": {"code": "BAD_TOOL_CALL", "message": text}}
+                    text_out = "\n".join(getattr(c, "text", "") for c in res.content)
+                    envelope = {"ok": False, "error": {"code": "BAD_TOOL_CALL", "message": text_out}}
                 if call.name in ("run_start", "run_retry") and envelope.get("ok"):
                     runs.append(envelope["data"]["run_id"])
                 if call.name == "hpo_start" and envelope.get("ok"):
                     runs.append(envelope["data"]["study_id"])
                 content = _truncate(json.dumps(envelope, ensure_ascii=False, default=str))
                 emit(AgentEvent("tool_result", {"name": call.name, "ok": envelope.get("ok"),
-                                                "error": (envelope.get("error") or {}).get("code")}))
+                                                "error": (envelope.get("error") or {}).get("code"),
+                                                "data": _brief(call.name, envelope)}))
                 transcript.write("tool_result", name=call.name, ok=envelope.get("ok"), content=content[:2000])
                 results.append(ToolResult(call.id, content, is_error=not envelope.get("ok", False)))
-            provider.add_tool_results(results)
-        else:
-            step = max_steps
+            self.provider.add_tool_results(results)
 
-    transcript.write("done", stop=stop, steps=step, runs=runs)
-    emit(AgentEvent("done", {"stop": stop, "steps": step, "runs": runs}))
-    return AgentResult(final_text=final_text, steps=step, stop=stop, runs=runs, transcript=str(transcript.path))
+        self.runs += runs
+        transcript.write("done", stop=stop, steps=step, runs=runs)
+        emit(AgentEvent("done", {"stop": stop, "steps": step, "runs": runs}))
+        return AgentResult(final_text=final_text, steps=step, stop=stop, runs=runs, transcript=str(transcript.path))
+
+
+def _brief(name: str, envelope: dict) -> dict[str, Any] | None:
+    """The few result fields a UI shows next to a tool call (ids and metrics), never whole payloads."""
+    data = envelope.get("data")
+    if not envelope.get("ok") or not isinstance(data, dict):
+        return None
+    out = {}
+    for k in ("run_id", "study_id", "status", "metrics", "model", "version", "name", "best_value", "improvement"):
+        v = data.get(k)
+        if isinstance(v, (int, float, bool, dict)) or (isinstance(v, str) and len(v) < 200):
+            out[k] = v
+    return out or None
+
+
+async def run_agent(
+    goal: str,
+    provider: Provider,
+    actor: str,
+    brain: BrainKind,
+    approve: ApproveFn | None = None,
+    on_event: EventFn | None = None,
+    max_steps: int = 40,
+    data_path: str | None = None,
+) -> AgentResult:
+    """One-shot agent (CLI `autoforge train`): a single goal, run until the model reports back."""
+    async with AgentSession(provider, actor, brain, approve, on_event, max_steps, origin="cli") as session:
+        return await session.send(goal, data_path)

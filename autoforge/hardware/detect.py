@@ -122,7 +122,7 @@ def _torch_info(notes: list[str]) -> tuple[str | None, bool, str | None]:
     try:
         import torch
     except ImportError:
-        notes.append("torch not installed; install with `pip install autoforge[gpu]`")
+        notes.append('torch not installed; install with `pip install "autoforge-trainer[gpu]"`')
         return None, False, None
     available = bool(torch.cuda.is_available())
     return torch.__version__, available, torch.version.cuda

@@ -136,7 +136,7 @@ class AnthropicProvider(Provider):
             try:
                 import anthropic
             except ImportError:
-                raise ProviderError("the anthropic package is not installed", hint='pip install "autoforge[anthropic]"')
+                raise ProviderError("the anthropic package is not installed", hint='pip install "autoforge-trainer[anthropic]"')
             client = anthropic.AsyncAnthropic()
         self.client = client
         self.model = model

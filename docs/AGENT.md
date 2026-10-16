@@ -10,11 +10,13 @@ autoforge train "預測 churned 欄位（客戶是否流失）" --data examples/
 
 它和 MCP 使用同一套工具，所以隱私守衛、稽核紀錄、錯誤格式都完全相同。
 
+不想用終端機的話，`autoforge gui` 的「AI 助手」頁面是同一個代理，可以多輪對話，也在頁面上同意開始訓練（見 [GUI.md](GUI.md)）。
+
 ## 選擇 AI 大腦（`--brain`）
 
 | `--brain` | 說明 | 類型 |
 |---|---|---|
-| `anthropic:claude-opus-5-5`（預設） | Claude，用官方 SDK。需要 `pip install "autoforge[anthropic]"` 和 `ANTHROPIC_API_KEY`（或 `ant auth login`） | 雲端 |
+| `anthropic:claude-opus-5-5`（預設） | Claude，用官方 SDK。需要 `pip install "autoforge-trainer[anthropic]"` 和 `ANTHROPIC_API_KEY`（或 `ant auth login`） | 雲端 |
 | `openai:<模型>` | OpenAI，或任何雲端的 OpenAI 相容 API（搭配 `--base-url`、`--api-key-env`） | 雲端 |
 | `ollama:<模型>` | 本機的 Ollama，例如 `ollama:qwen3`、`ollama:llama3.1` | **本地** |
 | `local:<模型> --base-url http://…/v1` | 其他本地 OpenAI 相容伺服器（vLLM、LM Studio、llama.cpp） | **本地** |

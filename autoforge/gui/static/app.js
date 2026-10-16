@@ -533,12 +533,163 @@ async function pagePacks() {
   search();
 }
 
+// ---------------------------------------------------------------- AI agent chat
+
+const TOOL_ZH = {
+  hardware_profile: "檢查硬體", data_profile: "分析資料", schema_get: "讀取資料格式", pack_search: "搜尋方法包",
+  pack_info: "閱讀方法包說明", pack_install: "安裝方法包", pack_list: "列出已安裝方法包", trainer_write: "撰寫訓練程式",
+  plan_validate: "檢查訓練計畫", run_start: "開始訓練", run_status: "查看訓練狀態", run_wait: "等待訓練",
+  run_list: "列出訓練", run_metrics: "讀取指標", run_logs: "讀取日誌", run_audit: "讀取操作紀錄", run_pause: "暫停訓練",
+  run_resume: "繼續訓練", run_stop: "停止訓練", run_retry: "重新訓練", run_diagnose: "診斷訓練", run_adjust: "調整參數",
+  run_compare: "比較訓練", hpo_start: "開始自動調參", hpo_status: "查看調參", hpo_wait: "等待調參", hpo_stop: "停止調參",
+  hpo_list: "列出調參", pack_create: "建立方法包", pack_test: "測試方法包", model_register: "註冊模型",
+  model_list: "列出模型", model_info: "讀取模型資訊", model_predict: "試著預測", model_export: "匯出模型",
+};
+const STOP_ZH = { end: "完成", stopped: "已停止", max_steps: "達到步數上限", refusal: "模型拒絕", error: "發生錯誤" };
+const CHAT_STATUS_ZH = { starting: "啟動中", idle: "等你輸入", thinking: "思考中…", approval: "等你確認", closed: "已結束", error: "發生錯誤" };
+
+async function pageAgent(chatId) {
+  const [cfg, chats, files] = await Promise.all([api("GET", "/api/agent/config"), api("GET", "/api/agent/chats"),
+    api("GET", "/api/data/files")]);
+  const brains = [...new Set([cfg.default_brain, "anthropic:claude-opus-5-5", ...cfg.ollama_models.map((m) => `ollama:${m}`)])];
+  const brainSel = h("select", { id: "brain" }, brains.map((b) => h("option", { value: b }, b)), h("option", { value: "" }, "其他（自己輸入）…"));
+  const brainOther = h("input", { id: "brain-other", placeholder: "provider:model，例如 openai:gpt-5 或 ollama:qwen3", size: 34, hidden: true });
+  const baseUrl = h("input", { id: "base-url", placeholder: "OpenAI 相容端點（local: 需要）", size: 30, hidden: true });
+  const brainNote = h("p", { class: "small muted" });
+  const noteFor = (b) => {
+    const local = /^(ollama|local):/.test(b);
+    brainNote.textContent = local
+      ? "本地模型：資料不離開這台電腦，可以使用標記為「敏感」的資料。"
+      : "雲端模型：只看得到一般資料的統計數字，標記為「敏感」的資料會被拒絕。"
+        + (b.startsWith("anthropic:") && !cfg.keys.anthropic ? "沒有偵測到 ANTHROPIC_API_KEY，請在啟動 autoforge gui 前設定。" : "")
+        + (b.startsWith("openai:") && !cfg.keys.openai ? "沒有偵測到 OPENAI_API_KEY。" : "");
+  };
+  const currentBrain = () => brainSel.value || brainOther.value.trim();
+  brainSel.onchange = () => { brainOther.hidden = brainSel.value !== ""; baseUrl.hidden = !/^local:/.test(currentBrain()); noteFor(currentBrain()); };
+  brainOther.oninput = () => { baseUrl.hidden = !/^local:/.test(currentBrain()); noteFor(currentBrain()); };
+  noteFor(currentBrain());
+
+  const newChat = async () => {
+    try {
+      const c = await api("POST", "/api/agent/chats", { brain: currentBrain(), base_url: baseUrl.value.trim() || null });
+      location.hash = `#/agent/${c.id}`;
+    } catch (e) { showError(e); }
+  };
+  app.append(h("div", { class: "row" }, h("h1", {}, "AI 助手"), h("span", { class: "spacer" })),
+    panel(h("div", { class: "row" }, h("label", { class: "field" }, "AI 大腦", brainSel), brainOther, baseUrl,
+      h("button", { class: "primary", id: "new-chat", onclick: newChat }, "＋ 新對話")), brainNote),
+    chats.length ? h("div", { class: "row chatlist" }, chats.map((c) => h("a", { class: `chip${c.id === chatId ? " on" : ""}`, href: `#/agent/${c.id}`, "data-chat": c.id },
+      `${c.title}（${CHAT_STATUS_ZH[c.status] || c.status}）`))) : null);
+
+  if (!chatId) {
+    app.append(panel(h("p", {}, "用一句話告訴 AI 你想訓練什麼，例如「用這份資料預測哪些客戶會流失」。AI 會檢查硬體和資料、挑方法、訓練並回報結果；"
+      + "開始訓練前會先問你。"), h("p", { class: "small muted" }, "對話中 AI 用自己的身分操作（操作紀錄會寫 ai:…），隱私規則和指令列的 autoforge train 相同。")));
+    return;
+  }
+
+  let chat;
+  try { chat = await api("GET", `/api/agent/chats/${encodeURIComponent(chatId)}`); }
+  catch (e) { app.append(panel(h("p", {}, "找不到這段對話（伺服器重新啟動後對話不會保留）。"), h("a", { href: "#/agent" }, "開始新對話"))); return; }
+
+  const log = h("div", { class: "chatlog", id: "chatlog", "aria-live": "polite" });
+  const statusEl = h("span", { class: "badge", id: "chat-status" });
+  const input = h("textarea", { id: "chat-input", placeholder: "輸入訊息（Ctrl+Enter 送出）", rows: 3 });
+  const dataSel = h("select", { id: "chat-data" }, h("option", { value: "" }, "（不附資料）"),
+    files.map((f) => h("option", { value: f.path }, f.name)));
+  const dataPath = h("input", { id: "chat-data-path", placeholder: "或輸入資料路徑", size: 28 });
+  const sendBtn = h("button", { class: "primary", id: "chat-send" }, "送出");
+  const stopBtn = h("button", { class: "danger", id: "chat-stop" }, "停止");
+  const toolLines = {};
+  let last = 0;
+
+  function bubble(cls, ...c) { const b = h("div", { class: `msg ${cls}` }, ...c); log.append(b); return b; }
+  function render(e) {
+    const d = e.data;
+    if (e.kind === "ready") bubble("sys", `已連線：${d.brain}（${d.local ? "本地模型" : "雲端模型"}，身分 ${d.actor}）`);
+    else if (e.kind === "user") bubble("user", d.text, d.data_path ? h("div", { class: "small muted" }, `資料：${d.data_path}`) : null);
+    else if (e.kind === "text") bubble("agent", d.text);
+    else if (e.kind === "tool_call") {
+      const args = JSON.stringify(d.arguments, null, 1);
+      toolLines[e.seq] = bubble("tool", h("span", {}, `→ ${TOOL_ZH[d.name] || d.name}`), h("span", { class: "mono muted" }, ` ${d.name}`),
+        args && args !== "{}" ? h("details", {}, h("summary", { class: "small" }, "參數"), h("pre", {}, args)) : null);
+      toolLines.last = toolLines[e.seq];
+    } else if (e.kind === "tool_result") {
+      const line = toolLines.last || bubble("tool");
+      const r = d.data || {};
+      line.append(...[d.ok ? h("span", { class: "ok" }, " ✓") : h("span", { class: "bad" }, ` ✗ ${d.error || ""}`),
+        r.run_id ? h("a", { href: `#/runs/${r.run_id}`, class: "small" }, ` ${r.run_id}`) : null,
+        r.study_id ? h("a", { href: `#/hpo/${r.study_id}`, class: "small" }, ` ${r.study_id}`) : null,
+        r.model ? h("a", { href: `#/models/${String(r.model).split(":")[0]}`, class: "small" }, ` ${r.model}`) : null,
+        r.metrics ? h("span", {}, Object.entries(r.metrics).slice(0, 4).map(([k, v]) => h("span", { class: "chip" }, `${k}=${fmt(v)}`))) : null].filter(Boolean));
+      if (d.error === "PRIVACY_DENIED") line.append(h("div", { class: "small bad" }, "這份資料標記為敏感，雲端模型不能使用。請改用本地模型（ollama:…）。"));
+    } else if (e.kind === "approval_request") {
+      const fb = h("input", { class: "approval-feedback", placeholder: "不同意時可以告訴 AI 要怎麼改", size: 36 });
+      const box = bubble("approval", h("strong", {}, `AI 想要${TOOL_ZH[d.tool] || d.tool}，請確認：`), h("pre", {}, d.summary));
+      const answer = async (approved) => {
+        try { await api("POST", `/api/agent/chats/${chatId}/approval`, { approved, feedback: fb.value }); box.querySelectorAll("button,input").forEach((x) => (x.disabled = true)); poll(); }
+        catch (err) { showError(err); }
+      };
+      box.append(h("div", { class: "row" }, h("button", { class: "primary approve", onclick: () => answer(true) }, "同意，開始"),
+        fb, h("button", { class: "decline", onclick: () => answer(false) }, "不同意")));
+      box.dataset.seq = e.seq;
+    } else if (e.kind === "approval") {
+      log.querySelectorAll(".msg.approval button, .msg.approval input").forEach((x) => (x.disabled = true));
+      bubble("sys", d.approved ? "你同意了。" : `你沒有同意${d.feedback ? `：${d.feedback}` : "。"}`);
+    } else if (e.kind === "info") bubble("sys warn", d.message);
+    else if (e.kind === "error") bubble("sys bad", d.message, d.hint ? h("div", { class: "small" }, d.hint) : null);
+    else if (e.kind === "done") bubble("sys", `— ${STOP_ZH[d.stop] || d.stop}（${d.steps} 步）`,
+      (d.runs || []).map((r) => h("a", { class: "chip", href: r.includes("-hpo-") ? `#/hpo/${r}` : `#/runs/${r}` }, r)));
+  }
+  function apply(v) {
+    const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+    v.events.forEach((e) => { if (e.seq > last) { render(e); last = e.seq; } });
+    statusEl.textContent = CHAT_STATUS_ZH[v.status] || v.status;
+    statusEl.className = `badge ${v.status === "idle" ? "succeeded" : v.status === "error" ? "failed" : "running"}`;
+    sendBtn.disabled = v.status !== "idle";
+    const chip = document.querySelector(`[data-chat="${chatId}"]`);
+    if (chip) chip.textContent = `${v.title}（${CHAT_STATUS_ZH[v.status] || v.status}）`;
+    stopBtn.disabled = !["thinking", "approval"].includes(v.status);
+    if (atBottom) log.scrollTop = log.scrollHeight;
+  }
+  async function poll() {
+    try { apply(await api("GET", `/api/agent/chats/${chatId}?after=${last}`)); } catch (e) { /* server gone: keep the page */ }
+  }
+  async function send() {
+    const text = input.value.trim();
+    if (!text) return;
+    const dp = dataPath.value.trim() || dataSel.value || null;
+    try {
+      await api("POST", `/api/agent/chats/${chatId}/messages`, { text, data_path: dp });
+      input.value = ""; dataPath.value = ""; dataSel.value = "";
+      poll();
+    } catch (e) { showError(e); }
+  }
+  sendBtn.onclick = send;
+  input.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) send(); });
+  stopBtn.onclick = async () => { try { await api("POST", `/api/agent/chats/${chatId}/stop`); poll(); } catch (e) { showError(e); } };
+  const closeBtn = h("button", { id: "chat-close", onclick: async () => {
+    if (!confirm("結束這段對話？已開始的訓練不受影響。")) return;
+    try { await api("DELETE", `/api/agent/chats/${chatId}`); location.hash = "#/agent"; } catch (e) { showError(e); }
+  } }, "結束對話");
+
+  app.append(panel(h("div", { class: "row" }, h("h2", {}, chat.title), h("span", { class: "chip" }, chat.brain),
+      h("span", { class: "chip" }, chat.local ? "本地模型" : "雲端模型"), statusEl, h("span", { class: "spacer" }), closeBtn),
+    log,
+    h("div", { class: "composer" }, input, h("div", { class: "row" }, h("label", { class: "field" }, "附上資料", dataSel), dataPath,
+      h("span", { class: "spacer" }), stopBtn, sendBtn)),
+    h("p", { class: "small muted" }, "停止只會讓 AI 停下來；已經開始的訓練請到訓練頁面停止。")));
+  apply(chat);
+  log.scrollTop = log.scrollHeight;
+  every(1000, poll);
+}
+
 // ---------------------------------------------------------------- router
 
 const ROUTES = [
   [/^#?\/?$/, "home", pageHome], [/^#\/new$/, "new", pageNew], [/^#\/runs$/, "runs", pageRuns],
   [/^#\/runs\/([\w.-]+)$/, "runs", pageRun], [/^#\/hpo\/([\w.-]+)$/, "runs", pageHpo],
   [/^#\/models$/, "models", pageModels], [/^#\/models\/([\w.:-]+)$/, "models", pageModel], [/^#\/packs$/, "packs", pagePacks],
+  [/^#\/agent$/, "agent", () => pageAgent(null)], [/^#\/agent\/([\w-]+)$/, "agent", pageAgent],
 ];
 
 async function route() {

@@ -8,38 +8,16 @@ from pathlib import Path
 
 import typer
 
-from autoforge.agents.loop import AgentEvent, run_agent
+from autoforge.agents.loop import AgentEvent, describe_call, run_agent
 from autoforge.agents.providers import ToolCall, make_provider, parse_brain
 from autoforge.cli.output import emit, errors_as_envelope, fail
 
 _SHORT = {"hardware_profile", "pack_list", "run_status", "run_wait", "run_metrics", "run_list"}
 
 
-def _describe_plan(call: ToolCall) -> str:
-    if call.name == "run_retry":
-        return f"retry run {call.arguments.get('run_id')}"
-    if call.name == "hpo_start":
-        a = call.arguments
-        head = (f"  hyperparameter search: {a.get('n_trials', 10)} trials, optimise {a.get('metric')}"
-                f" ({a.get('direction') or 'auto direction'})\n")
-        return head + _describe_plan(ToolCall(call.id, "run_start", {"plan": a.get("plan")}))
-    plan = call.arguments.get("plan") or {}
-    task = plan.get("task") or {}
-    method = (f"{plan.get('pack')} / {plan.get('recipe')}" if plan.get("pack")
-              else f"custom code {plan.get('custom_code_path')}")
-    lines = [
-        f"  task:            {task.get('task_type')} (target: {task.get('target')}, metric: {task.get('metric')})",
-        f"  data:            {plan.get('data_path')}",
-        f"  method:          {method}",
-        f"  device:          {plan.get('device', 'auto')}",
-        f"  hyperparameters: {json.dumps(plan.get('hyperparameters') or {}, ensure_ascii=False)}",
-    ]
-    return "\n".join(lines)
-
-
 async def _ask(call: ToolCall) -> tuple[bool, str]:
     typer.echo("\n" + typer.style("The agent wants to start training:", bold=True))
-    typer.echo(_describe_plan(call))
+    typer.echo(describe_call(call))
     answer = typer.prompt("Start? [y = yes / n = no / or type feedback for the agent]", default="n").strip()
     if answer.lower() in ("y", "yes"):
         return True, ""
