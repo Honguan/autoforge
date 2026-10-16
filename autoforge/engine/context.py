@@ -51,6 +51,7 @@ class TrainContext:
         self._last_check = 0.0
         self._stop = False
         self._adjust_seq = 0
+        self._control_mtime: tuple | None = None
 
     # ---- metrics / logging ----
 
@@ -80,8 +81,15 @@ class TrainContext:
 
     def check_updates(self) -> dict[str, Any]:
         """Hyperparameter changes sent with `run adjust` since the last call (already applied to
-        self.hyperparameters). Trainers that support live changes call this between steps."""
+        self.hyperparameters). Trainers that support live changes call this between steps; control.json
+        is only re-read when it changed, so calling this every step is cheap."""
         try:
+            st = self._control.stat()
+            # (mtime, size) plus a re-read every 2 s covers filesystems with coarse timestamps
+            key = (st.st_mtime_ns, st.st_size, int(time.monotonic() // 2))
+            if key == self._control_mtime:
+                return {}
+            self._control_mtime = key
             control = json.loads(self._control.read_text())
         except (OSError, ValueError):
             return {}

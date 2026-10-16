@@ -88,7 +88,7 @@ class TaskSpec(BaseModel):
 
 class TrainingPlan(BaseModel):
     task: TaskSpec
-    data_path: str = Field(description="training data file or directory")
+    data_path: str = Field(description="training data file or directory (for reinforcement learning: the environment spec file)")
     pack: str | None = Field(default=None, description="installed pack name; None when using custom code")
     recipe: str | None = None
     custom_code_path: str | None = Field(
