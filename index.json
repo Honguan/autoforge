@@ -15,7 +15,9 @@
         "outlier",
         "fraud",
         "unsupervised",
-        "csv"
+        "csv",
+        "異常",
+        "詐欺"
       ],
       "recipes": [
         {
@@ -38,7 +40,14 @@
       "tasks": [
         "text-to-image"
       ],
-      "tags": [],
+      "tags": [
+        "diffusion",
+        "stable diffusion",
+        "image generation",
+        "lora",
+        "dreambooth",
+        "圖像生成"
+      ],
       "recipes": [
         {
           "id": "sd_lora",
@@ -60,7 +69,15 @@
       "tasks": [
         "text-embedding"
       ],
-      "tags": [],
+      "tags": [
+        "embedding",
+        "retrieval",
+        "search",
+        "rag",
+        "similarity",
+        "向量",
+        "檢索"
+      ],
       "recipes": [
         {
           "id": "contrastive_pairs",
@@ -82,7 +99,15 @@
       "tasks": [
         "image-classification"
       ],
-      "tags": [],
+      "tags": [
+        "image",
+        "vision",
+        "cnn",
+        "timm",
+        "onnx",
+        "圖片",
+        "影像分類"
+      ],
       "recipes": [
         {
           "id": "timm_finetune",
@@ -104,7 +129,15 @@
       "tasks": [
         "image-segmentation"
       ],
-      "tags": [],
+      "tags": [
+        "segmentation",
+        "mask",
+        "pixel",
+        "deeplab",
+        "onnx",
+        "vision",
+        "影像分割"
+      ],
       "recipes": [
         {
           "id": "torchvision_segmenter",
@@ -126,7 +159,16 @@
       "tasks": [
         "llm-sft"
       ],
-      "tags": [],
+      "tags": [
+        "llm",
+        "lora",
+        "qlora",
+        "sft",
+        "chat",
+        "gpu",
+        "語言模型",
+        "微調"
+      ],
       "recipes": [
         {
           "id": "sft_lora",
@@ -148,7 +190,16 @@
       "tasks": [
         "llm-preference"
       ],
-      "tags": [],
+      "tags": [
+        "llm",
+        "dpo",
+        "preference",
+        "alignment",
+        "rlhf",
+        "lora",
+        "偏好",
+        "對齊"
+      ],
       "recipes": [
         {
           "id": "dpo_lora",
@@ -170,7 +221,15 @@
       "tasks": [
         "object-detection"
       ],
-      "tags": [],
+      "tags": [
+        "detection",
+        "bounding box",
+        "faster r-cnn",
+        "coco",
+        "vision",
+        "物件偵測",
+        "框"
+      ],
       "recipes": [
         {
           "id": "torchvision_detector",
@@ -192,7 +251,14 @@
       "tasks": [
         "recommendation"
       ],
-      "tags": [],
+      "tags": [
+        "recommendation",
+        "recommender",
+        "collaborative filtering",
+        "als",
+        "implicit",
+        "推薦"
+      ],
       "recipes": [
         {
           "id": "implicit_als",
@@ -223,7 +289,14 @@
       "tasks": [
         "reinforcement-learning"
       ],
-      "tags": [],
+      "tags": [
+        "reinforcement learning",
+        "rl",
+        "ppo",
+        "dqn",
+        "gymnasium",
+        "強化學習"
+      ],
       "recipes": [
         {
           "id": "sb3",
@@ -245,7 +318,14 @@
       "tasks": [
         "speech-to-text"
       ],
-      "tags": [],
+      "tags": [
+        "speech",
+        "asr",
+        "whisper",
+        "audio",
+        "transcription",
+        "語音辨識"
+      ],
       "recipes": [
         {
           "id": "whisper_finetune",
@@ -273,7 +353,10 @@
         "sklearn",
         "baseline",
         "cpu",
-        "onnx"
+        "onnx",
+        "表格",
+        "分類",
+        "回歸"
       ],
       "recipes": [
         {
@@ -312,7 +395,9 @@
         "sentiment",
         "intent",
         "transformer",
-        "csv"
+        "csv",
+        "文字",
+        "情緒"
       ],
       "recipes": [
         {
@@ -344,7 +429,16 @@
       "tasks": [
         "timeseries-forecast"
       ],
-      "tags": [],
+      "tags": [
+        "time series",
+        "forecast",
+        "demand",
+        "sales",
+        "multi-series",
+        "csv",
+        "時間序列",
+        "預測"
+      ],
       "recipes": [
         {
           "id": "lag_gbm",
