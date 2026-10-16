@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "autoforge-ai"
-version = "1.0.0"
+version = "1.0.1"
 description = "AI that trains AI: analyse your data and hardware, pick a method, train, tune and deploy models on your own machine — from a CLI, MCP, a web GUI or one sentence."
 readme = "README.md"
 requires-python = ">=3.11"

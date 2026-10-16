@@ -140,3 +140,16 @@ def test_unknown_run_id():
     with pytest.raises(Exception) as e:
         RunStore.open("nope")
     assert e.value.code == "RUN_NOT_FOUND"
+
+
+def test_git_commit_ignores_temp_files_written_by_the_worker(toy):
+    """Regression: `git add -A` raced the worker's atomic temp files and silently skipped commits."""
+    import subprocess
+
+    store = runner.create_run(toy())
+    (store.dir / "state.json.tmp12345").write_text("{}")  # what an atomic write leaves for an instant
+    (store.dir / "adjustments.yaml").write_text("lr: 0.5\n")
+    assert store.git_commit("adjust {'lr': 0.5}", "human")
+    tracked = subprocess.run(["git", "ls-files"], cwd=store.dir, capture_output=True, text=True).stdout.split()
+    assert "adjustments.yaml" in tracked and "plan.yaml" in tracked
+    assert not any(".tmp" in t for t in tracked)

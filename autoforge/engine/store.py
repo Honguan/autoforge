@@ -34,7 +34,11 @@ from autoforge.errors import AutoForgeError
 from autoforge.schemas.core import RunStatus, TrainingPlan
 
 TERMINAL = {RunStatus.succeeded, RunStatus.failed, RunStatus.stopped}
-GITIGNORE = "output/\ncheckpoints/\nlogs.txt\nevents.jsonl\naudit.jsonl\nstate.json\nproc.json\ncontrol.json\n"
+GITIGNORE = ("output/\ncheckpoints/\nlogs.txt\nevents.jsonl\naudit.jsonl\nstate.json\nproc.json\ncontrol.json\n"
+             "*.tmp*\n__pycache__/\n")
+# Only these are versioned. Adding them by name (not `git add -A`) avoids racing the worker, whose
+# atomic writes create and rename temp files while a commit is being made.
+VERSIONED = (".gitignore", "plan.yaml", "adjustments.yaml", "code", "pack")
 
 
 class RunNotFound(AutoForgeError):
@@ -178,7 +182,7 @@ class RunStore:
             if not (self.dir / ".git").is_dir():
                 git("init", "-q")
                 (self.dir / ".gitignore").write_text(GITIGNORE)
-            git("add", "-A")
+            git("add", "--", *[p for p in VERSIONED if (self.dir / p).exists()])
             git("-c", "user.name=autoforge", "-c", "user.email=autoforge@localhost",
                 "commit", "-q", "--allow-empty", "-m", f"[{actor}] {message}")
             return True
