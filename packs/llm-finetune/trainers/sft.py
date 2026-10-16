@@ -116,7 +116,7 @@ def train(ctx) -> dict:
         kwargs["dtype"] = torch.bfloat16 if cuda and torch.cuda.is_bf16_supported() else torch.float32
     model = AutoModelForCausalLM.from_pretrained(base, **kwargs)
     if hp.get("load_in_4bit"):
-        model = prepare_model_for_kbit_training(model)
+        model = prepare_model_for_kbit_training(model, gradient_checkpointing_kwargs={"use_reentrant": False})
     else:
         model.to(device)
 

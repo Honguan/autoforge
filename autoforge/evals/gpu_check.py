@@ -114,12 +114,15 @@ def data_masks(d: Path) -> Path:
 
 
 def data_pairs(d: Path) -> Path:
-    topics = ["refund policy", "shipping cost", "opening hours", "password reset", "invoice request", "warranty",
-              "gift cards", "store locations", "order tracking", "account deletion"]
+    """Every query has exactly one right answer (a distinct product and topic), so recall@1 can reach 1."""
+    topics = ["refund", "shipping cost", "warranty", "battery life", "size chart", "colour options", "delivery time",
+              "installation", "cleaning", "spare parts"]
+    products = ["kettle", "bicycle", "laptop", "sofa", "camera", "blender", "tent", "guitar", "printer", "drone",
+                "backpack", "lamp", "heater", "scooter", "watch", "speaker", "router", "mixer", "jacket", "desk"]
     rows = ["anchor,positive"]
     for i in range(200):
-        t = topics[i % len(topics)]
-        rows.append(f"\"How do I ask about {t}? ({i})\",\"Answer about {t}: see the {t} page, item {i % 7}.\"")
+        t, prod = topics[i % len(topics)], products[i // len(topics)]
+        rows.append(f"\"What is the {t} for the {prod}?\",\"The {prod}: here is everything about its {t}.\"")
     p = d / "pairs.csv"
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text("\n".join(rows) + "\n", encoding="utf-8")
@@ -140,6 +143,43 @@ def data_audio(d: Path) -> Path:
         rows.append(f"{i}.wav,{words[i % 6]}")
     (root / "train.csv").write_text("\n".join(rows) + "\n")
     return root / "train.csv"
+
+
+def data_speech(d: Path) -> Path:
+    """Real English speech: the 73-clip LibriSpeech sample used by the transformers test suite (~9 MB).
+    Needs pyarrow to read it; without it, falls back to synthetic tones (CUDA path only, WER meaningless)."""
+    import io
+
+    try:
+        import pyarrow.parquet as pq
+        import soundfile as sf
+        from huggingface_hub import hf_hub_download
+    except ImportError:
+        return data_audio(d)
+    parquet = hf_hub_download("hf-internal-testing/librispeech_asr_dummy", "clean/validation-00000-of-00001.parquet",
+                              repo_type="dataset")
+    root = d / "speech"
+    root.mkdir(parents=True, exist_ok=True)
+    rows = ["audio,text"]
+    for i, rec in enumerate(pq.read_table(parquet, columns=["audio", "text"]).to_pylist()):
+        audio, sr = sf.read(io.BytesIO(rec["audio"]["bytes"]))
+        if len(audio) / sr > 15:  # keep the check quick
+            continue
+        sf.write(root / f"{i}.flac", audio, sr)
+        rows.append(f"{i}.flac,\"{rec['text'].lower()}\"")
+    (root / "train.csv").write_text("\n".join(rows) + "\n", encoding="utf-8")
+    return root / "train.csv"
+
+
+def _speech_row(d: Path) -> dict:
+    clips = sorted((d / "speech").glob("*.flac")) or sorted((d / "audio").glob("*.wav"))
+    return {"audio": str(clips[0])}
+
+
+def _wer_ok(m: dict[str, float]) -> str | None:
+    if importlib.util.find_spec("pyarrow") is None:  # synthetic tones: only the training path is checked
+        return _finite("wer")(m)
+    return _at_most("wer", 0.5)(m)
 
 
 def data_style(d: Path) -> Path:
@@ -190,6 +230,15 @@ def _at_least(metric: str, value: float):
     return f
 
 
+def _at_most(metric: str, value: float):
+    def f(m: dict[str, float]) -> str | None:
+        v = m.get(metric)
+        if v is None or not math.isfinite(v):
+            return f"{metric} missing or not finite"
+        return None if v <= value else f"{metric}={v:.3f} above {value}"
+    return f
+
+
 def _finite(metric: str):
     def f(m: dict[str, float]) -> str | None:
         v = m.get(metric)
@@ -225,12 +274,13 @@ CHECKS: list[Check] = [
           "miou", _at_least("miou", 0.5), lambda d: {"image": str(d / "seg" / "images" / "0.png")}),
     Check("embedding", "embedding-finetune", "contrastive_pairs", "text-embedding", data_pairs,
           {"epochs": 1, "batch_size": 16}, {"epochs": 3},
-          "recall_at_1", _at_least("recall_at_1", 0.5), lambda d: {"text": "How do I get a refund?", "compare": "refund policy answer"}),
-    Check("whisper", "speech-recognition", "whisper_finetune", "speech-to-text", data_audio,
+          "recall_at_1", _at_least("recall_at_1", 0.8),
+          lambda d: {"text": "What is the refund for the kettle?", "compare": "The kettle refund"}),
+    Check("whisper", "speech-recognition", "whisper_finetune", "speech-to-text", data_speech,
           {"model_name": "openai/whisper-tiny", "language": "en", "epochs": 1, "batch_size": 8, "grad_accum": 1},
           {"model_name": "openai/whisper-small", "language": "en", "epochs": 2},
-          "wer", _finite("wer"), lambda d: {"audio": str(d / "audio" / "0.wav")},
-          note="synthetic tones: checks the CUDA/bf16 training path, not transcription quality"),
+          "wer", _wer_ok, _speech_row,
+          note="real LibriSpeech clips (needs pyarrow); without pyarrow: synthetic tones, CUDA path only"),
     Check("diffusion-lora", "diffusion-lora", "sd_lora", "text-to-image", data_style,
           {"model_name": "hf-internal-testing/tiny-sd-pipe", "resolution": 64, "epochs": 2, "grad_accum": 1,
            "num_inference_steps": 4},
@@ -261,7 +311,7 @@ class VramSampler:
     """Peak GPU memory used on all devices while a run is active (NVML; 0 when unavailable)."""
 
     def __init__(self, interval: float = 0.25):
-        self.interval, self.peak_gb, self.baseline_gb = interval, 0.0, 0.0
+        self.interval, self.peak_gb, self.baseline_gb, self.samples = interval, 0.0, 0.0, 0
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         try:
@@ -283,8 +333,13 @@ class VramSampler:
         return self
 
     def _loop(self) -> None:
+        # Relative to the lowest reading, not the first: memory still being released by the previous run
+        # (or another app) when this one starts must not hide this run's own usage.
+        low = high = self.baseline_gb
         while not self._stop.wait(self.interval):
-            self.peak_gb = max(self.peak_gb, self._used_gb() - self.baseline_gb)
+            used = self._used_gb()
+            low, high = min(low, used), max(high, used)
+            self.peak_gb, self.samples = high - low, self.samples + 1
 
     def __exit__(self, *exc: Any) -> None:
         self._stop.set()
@@ -307,6 +362,7 @@ class CheckResult:
     peak_vram_gb: float = 0.0
     declared_min_vram_gb: float | None = None
     metrics: dict[str, float] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
     prediction: str = ""
     run_id: str | None = None
     log_tail: list[str] = field(default_factory=list)
@@ -364,7 +420,8 @@ def run_check(check: Check, tier: str, device: str, work: Path, packs_dir: Path 
         if device == "cuda" and view.device != "cuda":
             problem = problem or f"asked for cuda but the run used {view.device}"
         elif device == "cuda" and vram._handles and res.peak_vram_gb < 0.05:
-            problem = problem or "no GPU memory was used: the trainer may have run on the CPU"
+            # NVML on Windows (WDDM) sometimes misses short runs; the engine's device is the real signal
+            res.warnings.append("GPU memory use was not measured (NVML saw no change); the run did use cuda")
         res.verdict, res.reason = ("fail", problem) if problem else ("pass", "trained on the GPU, metrics look right, predict works")
     except Exception as e:  # noqa: BLE001 — report and continue with the next check
         res.verdict, res.reason = "error", f"{type(e).__name__}: {e}"
@@ -421,5 +478,6 @@ def markdown(report: dict[str, Any]) -> str:
         metrics = ", ".join(f"{k}={v:.3g}" for k, v in list(r["metrics"].items())[:3])
         declared = f"{r['declared_min_vram_gb']} GB" if r["declared_min_vram_gb"] else "—"
         lines.append(f"| {r['id']} | {mark[r['verdict']]} {r['verdict']} | {r['seconds']:.0f} s | {r['peak_vram_gb']} GB | "
-                     f"{declared} | {metrics} | {r['reason'].replace('|', '/')[:160]} |")
+                     f"{declared} | {metrics} | {r['reason'].replace('|', '/')[:160]}"
+                     f"{''.join(' ⚠ ' + w for w in r.get('warnings', []))} |")
     return "\n".join(lines) + "\n"

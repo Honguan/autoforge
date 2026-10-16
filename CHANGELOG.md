@@ -1,5 +1,13 @@
 # 變更紀錄
 
+## 1.4.1 — 2026-10
+
+依第一次真的 GPU 實測（RTX 4060 Laptop 8 GB、Windows，10 項中 9 項通過）做的修正：
+- `eval gpu`：VRAM 峰值改成「最高減最低讀數」；量不到 VRAM 變化時只提出警告，不再判為失敗（實際裝置以引擎記錄為準）。這次唯一的失敗就是這個誤判。
+- `eval gpu` 的 Whisper 檢查改用真的英文語音（LibriSpeech 片段，需要 `pyarrow`），要求 WER ≤ 0.5；embedding 檢查改用一對一的問答，要求 recall@1 ≥ 0.8。
+- llm-finetune 0.1.2、llm-preference 0.1.1：最低 VRAM 宣告從 8 GB 改成 6 GB（0.5B QLoRA 實測 1.4–1.6 GB）；gradient checkpointing 改用 `use_reentrant=False`，不再出現警告。
+- text-classification 0.1.1：記錄 loss 改用 `loss.item()`。
+
 ## 1.4.0 — 2026-10
 
 - **在 GPU 上驗證方法包**：`autoforge eval gpu [--full]`。10 個 GPU 方法包各用一小份容易學的資料，在 CUDA 上真的訓練（QLoRA 4-bit、混合精度、預訓練模型），一邊用 NVML 量 VRAM 峰值，再註冊並預測一次。報告列出每一項的結果、時間、VRAM 峰值和方法包宣告的最低 VRAM。說明見 docs/GPU.md。

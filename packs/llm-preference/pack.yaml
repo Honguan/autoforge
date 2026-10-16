@@ -1,5 +1,5 @@
 name: llm-preference
-version: 0.1.0
+version: 0.1.1
 summary: Align an open LLM with chosen/rejected answer pairs using Direct Preference Optimization (DPO) on a LoRA/QLoRA adapter.
 tasks: [llm-preference]
 recipes: [dpo_lora]

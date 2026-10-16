@@ -26,6 +26,7 @@ the left to `max_prompt_length`; answers are cut so prompt + answer ≤ `max_len
 memory; reference log-probs are computed once before training). `init_adapter: <path>` starts from an existing LoRA
 adapter, e.g. the `output/` folder of an llm-finetune run (same `model_name`!). The reference stays the plain base,
 so DPO also keeps the SFT gains as part of the "policy"; use a smaller `beta`/fewer epochs if outputs drift.
+Measured: Qwen2.5-0.5B-Instruct 4-bit, `max_length: 128`, `batch_size: 2` peaked at 1.6 GB on an RTX 4060 Laptop.
 GPU sizing is the same as llm-finetune (6–8 GB: 0.5–1.5B; 8–12 GB: 7–8B with QLoRA), but each step runs two
 sequences per pair, so halve `batch_size` and raise `grad_accum`.
 

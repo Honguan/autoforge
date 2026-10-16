@@ -1,5 +1,5 @@
 name: text-classification
-version: 0.1.0
+version: 0.1.1
 summary: Classify text (sentiment, intent, topic, spam...) from a CSV with a text column and a label column.
 tasks: [text-classification]
 recipes: [tfidf_linear, transformer_finetune]

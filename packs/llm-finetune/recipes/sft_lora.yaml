@@ -5,7 +5,7 @@ entrypoint: trainers/sft.py:train
 predictor: trainers/sft.py
 exporters:
   merged: trainers/sft.py:export_merged
-requires: { device: cuda, min_vram_gb: 8, min_ram_gb: 16 }
+requires: { device: cuda, min_vram_gb: 6, min_ram_gb: 16 }
 good_for: Teach a 0.5B–8B open model a style, format or domain from 200+ prompt/response pairs; QLoRA fits 7–8B in 8–12 GB VRAM.
 avoid_when: The task is classification (use text-classification) or the knowledge changes often (use retrieval instead).
 defaults: { model_name: Qwen/Qwen2.5-0.5B-Instruct, load_in_4bit: false, lora_r: 16, lora_alpha: 32, lora_dropout: 0.05,

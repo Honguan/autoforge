@@ -31,7 +31,7 @@ def _evaluate(model, tok, texts, label_ids, device, batch_size, max_length):
             enc = tok([texts[i] for i in idx], truncation=True, max_length=max_length, padding=True, return_tensors="pt").to(device)
             labels = torch.tensor([label_ids[i] for i in idx], device=device)
             out = model(**enc, labels=labels)
-            total_loss += float(out.loss) * len(idx)
+            total_loss += out.loss.item() * len(idx)
             n += len(idx)
             preds += out.logits.argmax(-1).tolist()
     model.train()
@@ -89,7 +89,7 @@ def train(ctx) -> dict:
             sched.step()
             opt.zero_grad()
             if step % 10 == 0:
-                ctx.log_metric("train_loss", float(out.loss), step=step)
+                ctx.log_metric("train_loss", out.loss.item(), step=step)
             step += 1
         val_loss, preds = _evaluate(model, tok, x_val, yv, device, bs, max_len)
         m = scores(yv, preds)

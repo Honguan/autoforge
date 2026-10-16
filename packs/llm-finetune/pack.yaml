@@ -1,5 +1,5 @@
 name: llm-finetune
-version: 0.1.1
+version: 0.1.2
 summary: Fine-tune an open LLM on your instructions/chats with LoRA or QLoRA (4-bit) on one NVIDIA GPU.
 tasks: [llm-sft]
 recipes: [sft_lora]

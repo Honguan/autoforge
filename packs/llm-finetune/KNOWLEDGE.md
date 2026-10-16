@@ -18,6 +18,9 @@
 | 8–12 GB | 7–8B (Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct) | `load_in_4bit: true` (QLoRA), `batch_size: 1–2`, `grad_accum: 8–16` |
 | 24 GB | 7–8B | `load_in_4bit: false` or QLoRA with `max_length: 2048` |
 | 24 GB+ | 13–14B | QLoRA |
+
+Measured (`autoforge eval gpu`, RTX 4060 Laptop 8 GB, Windows): Qwen2.5-0.5B-Instruct QLoRA, `max_length: 128`,
+`batch_size: 4` peaked at 1.4 GB. Longer `max_length` grows activation memory roughly linearly.
 QLoRA needs `pip install bitsandbytes`. Gated models (Llama) need `huggingface-cli login` first.
 
 ## Data requirements
