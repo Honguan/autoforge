@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install "autoforge @ git+https://github.com/Honguan/autoforge@main"
+      - run: pip install "autoforge-trainer @ git+https://github.com/Honguan/autoforge@main"
       - run: autoforge index validate index.json
       - name: Install every pack at its pinned commit
         run: |
