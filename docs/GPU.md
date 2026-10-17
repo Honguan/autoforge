@@ -48,6 +48,25 @@ autoforge eval gpu --list                                # 看有哪些檢查
 
 ## 實測結果
 
+**RTX 4060 Laptop（8 GB）、Windows 11、PyTorch 2.11 + CUDA 12.8，quick 等級（1.4.1）：10 項全部通過。**
+
+| 檢查 | 時間 | VRAM 峰值 | 宣告最低 | 指標 |
+|---|---|---|---|---|
+| image-classification | 26 s | 0.54 GB | — | 準確率 1.0 |
+| text-transformer | 77 s | 3.07 GB | 4 GB | 準確率 1.0 |
+| llm-qlora（Qwen2.5-0.5B 4-bit） | 48 s | 1.73 GB | 6 GB | val_loss ≈ 0 |
+| llm-dpo（Qwen2.5-0.5B 4-bit） | 50 s | 1.37 GB | 6 GB | 偏好判斷正確率 1.0 |
+| object-detection | 22 s | 0.69 GB | — | mAP@0.5 1.0 |
+| image-segmentation | 15 s | 0.53 GB | — | mIoU 0.94 |
+| embedding | 20 s | 0.58 GB | — | recall@1 1.0 |
+| whisper（whisper-tiny，真的語音） | 29 s | 1.95 GB | — | WER 0.079、CER 0.040 |
+| diffusion-lora（極小管線，bf16） | 30 s | 0.20 GB | 8 GB | 正常 |
+| rl-ppo | 70 s | 0.20 GB | — | 平均獎勵 492 |
+
+VRAM 峰值都在各方法包宣告的最低值以下。
+
+### 1.4.0 的第一次實測
+
 **RTX 4060 Laptop（8 GB）、Windows 11、PyTorch 2.11 + CUDA 12.8，quick 等級（1.4.0）：** 10 項中 9 項通過。
 
 | 檢查 | 時間 | VRAM 峰值 | 結果 |
